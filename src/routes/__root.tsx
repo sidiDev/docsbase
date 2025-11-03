@@ -4,7 +4,6 @@ import {
   HeadContent,
   Outlet,
   Scripts,
-  createRootRoute,
   createRootRouteWithContext,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
@@ -14,19 +13,8 @@ import appCss from "../styles.css?url";
 import { ThemeProvider } from "../components/ThemeProvider";
 import { DefaultCatchBoundary } from "../components/DefaultCatchBoundary";
 import { NotFound } from "../components/NotFound";
-import { createServerFn } from "@tanstack/react-start";
-import { auth } from "@clerk/tanstack-react-start/server";
-import { ClerkProvider } from "@clerk/tanstack-react-start";
 import type { QueryClient } from "@tanstack/react-query";
 import { authQueryOptions, type AuthQueryResult } from "../lib/queries";
-
-const fetchClerkAuth = createServerFn({ method: "GET" }).handler(async () => {
-  const { userId } = await auth();
-
-  return {
-    userId,
-  };
-});
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -86,6 +74,22 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <head>
         <HeadContent />
       </head>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+              (function() {
+                try {
+                  const theme = localStorage.getItem('theme');
+                  const isDark = theme === 'dark' || 
+                    (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                  if (isDark) {
+                    document.documentElement.classList.add('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+        }}
+      />
       <body>
         <ThemeProvider>
           <ConvexProvider>

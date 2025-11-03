@@ -31,7 +31,19 @@ export default function LoginButton({
       ),
   });
   const handleLogin = async () => {
-    await mutation.mutateAsync();
+    setLoading(true);
+    await mutation
+      .mutateAsync()
+      .then(() => {
+        setLoading(false);
+      })
+      .catch((err) => {
+        setLoading(false);
+        toast.error(err.message || `An error occurred during Google sign-in.`);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   return (
