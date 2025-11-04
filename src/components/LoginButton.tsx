@@ -2,6 +2,7 @@ import { Button } from "./ui/button";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { useSignIn } from "@clerk/clerk-react";
+import { SignInButton, UserButton } from "@clerk/clerk-react";
 
 export default function LoginButton({
   name = "Login",
@@ -30,8 +31,14 @@ export default function LoginButton({
   };
 
   return (
-    <Button onClick={handleLogin} style={{ width }} className="rounded-full">
-      {loading ? <Loader2 className="size-4 animate-spin" /> : name}
-    </Button>
+    <SignInButton
+      mode="modal"
+      forceRedirectUrl={"/dashboard"}
+      signUpFallbackRedirectUrl={"/dashboard"}
+    >
+      <Button style={{ width }} className="rounded-full">
+        {loading ? <Loader2 className="size-4 animate-spin" /> : name}
+      </Button>
+    </SignInButton>
   );
 }
