@@ -1,40 +1,70 @@
-import { QueryClient } from "@tanstack/react-query";
-import { createRouter } from "@tanstack/react-router";
-import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
-
-import { DefaultCatchBoundary } from "./components/DefaultCatchBoundary";
-import { NotFound } from "./components/NotFound";
+import {
+  MutationCache,
+  QueryClient,
+  notifyManager,
+} from "@tanstack/react-query";
+import { createRouter as createTanStackRouter } from "@tanstack/react-router";
+import { ConvexQueryClient } from "@convex-dev/react-query";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { routeTree } from "./routeTree.gen";
+import { ClerkProvider, useAuth } from "@clerk/clerk-react";
 
 export function getRouter() {
-  const queryClient = new QueryClient({
+  if (typeof document !== "undefined") {
+    notifyManager.setScheduler(window.requestAnimationFrame);
+  }
+
+  const CONVEX_URL = (import.meta as any).env.VITE_CONVEX_URL!;
+  console.log(CONVEX_URL);
+
+  if (!CONVEX_URL) {
+    console.error("missing envar CONVEX_URL");
+  }
+  const convexQueryClient = new ConvexQueryClient(CONVEX_URL);
+
+  const queryClient: QueryClient = new QueryClient({
     defaultOptions: {
       queries: {
-        refetchOnWindowFocus: false,
-        staleTime: 1000 * 60 * 2, // 2 minutes
+        queryKeyHashFn: convexQueryClient.hashFn(),
+        queryFn: convexQueryClient.queryFn(),
       },
     },
+    mutationCache: new MutationCache({
+      onError: () => {
+        //  toast(error.message, { className: "bg-red-500 text-white" });
+      },
+    }),
   });
+  convexQueryClient.connect(queryClient);
 
-  const router = createRouter({
+  const router = createTanStackRouter({
     routeTree,
-    context: { queryClient, user: null },
     defaultPreload: "intent",
-    // react-query will handle data fetching & caching
-    // https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#passing-all-loader-events-to-an-external-cache
-    defaultPreloadStaleTime: 0,
-    defaultErrorComponent: DefaultCatchBoundary,
-    defaultNotFoundComponent: () => <NotFound />,
-    scrollRestoration: true,
-    defaultStructuralSharing: true,
-  });
-
-  setupRouterSsrQueryIntegration({
-    router,
-    queryClient,
-    handleRedirects: true,
-    wrapQueryClient: true,
+    defaultErrorComponent: () => "Error!",
+    defaultNotFoundComponent: () => "Not found!",
+    context: { queryClient } as any,
+    Wrap: ({ children }) => (
+      <ClerkProvider
+        publishableKey={(import.meta as any).env.VITE_CLERK_PUBLISHABLE_KEY!}
+      >
+        <ConvexProviderWithClerk
+          client={convexQueryClient.convexClient}
+          useAuth={useAuth}
+        >
+          {children}
+        </ConvexProviderWithClerk>
+      </ClerkProvider>
+    ),
   });
 
   return router;
+}
+
+// Export as createRouter for backwards compatibility
+export const createRouter = getRouter;
+
+declare module "@tanstack/react-router" {
+  interface Register {
+    router: ReturnType<typeof getRouter>;
+  }
 }

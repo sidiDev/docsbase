@@ -9,6 +9,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@clerk/backend": "^2.19.1",
     "@clerk/clerk-react": "^5.53.4",
     "@clerk/tanstack-react-start": "^0.26.5",
     "@clerk/tanstack-start": "^0.11.5",
@@ -26,6 +27,7 @@
     "@tanstack/react-start": "^1.132.0",
     "@tanstack/router-devtools": "^1.134.9",
     "@tanstack/router-plugin": "^1.132.0",
+    "@tanstack/start": "^1.120.20",
     "better-auth": "^1.3.34",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -36,6 +38,7 @@
     "react-dom": "^19.2.0",
     "sonner": "^2.0.7",
     "srvx": "0.8.15",
+    "svix": "^1.81.0",
     "tailwind-merge": "^3.0.2",
     "tailwindcss": "^4.0.6",
     "tw-animate-css": "^1.3.6",
