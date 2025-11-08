@@ -1,10 +1,27 @@
 import { Link } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
 
-function Logo() {
+function Logo({
+  href = "/",
+  className = "",
+  noLink = false,
+}: {
+  href?: string;
+  className?: string;
+  noLink?: boolean;
+}) {
   return (
     <Link
-      to="/"
-      className="flex items-center justify-center gap-2 self-center font-semibold text-foreground"
+      to={href}
+      onClick={(e: React.MouseEvent<HTMLAnchorElement>) => {
+        if (noLink) {
+          e.preventDefault();
+        }
+      }}
+      className={cn(
+        "flex items-center justify-center gap-2 self-center font-semibold text-foreground",
+        className
+      )}
     >
       <div className="bg-primary border border-border flex size-7 items-center justify-center rounded-md">
         <svg

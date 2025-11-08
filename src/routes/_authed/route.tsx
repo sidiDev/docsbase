@@ -1,6 +1,8 @@
 import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@clerk/clerk-react";
 import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import Brand from "@/components/Brand";
 
 export const Route = createFileRoute("/_authed")({
   component: AuthedLayout,
@@ -21,7 +23,10 @@ function AuthedLayout() {
   if (!isLoaded) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-lg">Loading...</div>
+        <div className="text-lg">
+          {/* <Loader2 className="size-4 animate-spin" /> */}
+          <Brand noLink={true} />
+        </div>
       </div>
     );
   }
