@@ -15,7 +15,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Outlet } from "@tanstack/react-router";
-import Onboarding from "@/components/Onboarding";
 
 export const Route = createFileRoute("/_authed/dashboard")({
   component: RouteComponent,
@@ -23,8 +22,6 @@ export const Route = createFileRoute("/_authed/dashboard")({
 
 function RouteComponent() {
   const location = useLocation();
-
-  console.log(location);
 
   // Generate breadcrumb items from the current path
   const generateBreadcrumbs = () => {
@@ -48,7 +45,7 @@ function RouteComponent() {
   const breadcrumbs = generateBreadcrumbs();
 
   if (location.pathname.includes("/onboarding")) {
-    return <Onboarding />;
+    return <Outlet />;
   }
 
   return (

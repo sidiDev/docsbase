@@ -16,6 +16,12 @@ const config = defineConfig({
     viteReact(),
     netlify(),
   ],
+  server: {
+    allowedHosts: true,
+  },
+  optimizeDeps: {
+    include: ["@clerk/tanstack-react-start", "cookie"],
+  },
 });
 
 export default config;

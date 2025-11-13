@@ -1,4 +1,9 @@
-import { internalMutation, query, QueryCtx } from "./_generated/server";
+import {
+  internalMutation,
+  mutation,
+  query,
+  QueryCtx,
+} from "./_generated/server";
 import { UserJSON } from "@clerk/backend";
 import { v, Validator } from "convex/values";
 
@@ -6,6 +11,115 @@ export const current = query({
   args: {},
   handler: async (ctx) => {
     return await getCurrentUser(ctx);
+  },
+});
+
+export const updateUserSettings = mutation({
+  args: {
+    externalId: v.string(),
+    firstName: v.optional(v.string()),
+    lastName: v.optional(v.string()),
+    username: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await userByExternalId(ctx, args.externalId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await ctx.db.patch(user._id, {
+      firstName: args.firstName,
+      lastName: args.lastName,
+      username: args.username,
+    });
+
+    return { success: true };
+  },
+});
+
+export const getUserByExternalId = query({
+  args: { externalId: v.string() },
+  handler: async (ctx, args) => {
+    return await userByExternalId(ctx, args.externalId);
+  },
+});
+
+export const generateUploadUrl = mutation(async (ctx) => {
+  return await ctx.storage.generateUploadUrl();
+});
+
+export const updateProfilePicture = mutation({
+  args: {
+    externalId: v.string(),
+    storageId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await userByExternalId(ctx, args.externalId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Get the URL for the uploaded file
+    const pictureUrl = await ctx.storage.getUrl(args.storageId as any);
+
+    if (!pictureUrl) {
+      throw new Error("Failed to get picture URL");
+    }
+
+    await ctx.db.patch(user._id, {
+      pictureUrl,
+    });
+
+    return { success: true, pictureUrl };
+  },
+});
+
+export const removeProfilePicture = mutation({
+  args: {
+    externalId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await userByExternalId(ctx, args.externalId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await ctx.db.patch(user._id, {
+      pictureUrl: undefined,
+    });
+
+    return { success: true };
+  },
+});
+
+export const deleteUserAccount = mutation({
+  args: {
+    externalId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const user = await userByExternalId(ctx, args.externalId);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    // Delete all user's documents
+    const userDocs = await ctx.db
+      .query("docs")
+      .withIndex("byExternalId", (q) => q.eq("externalId", args.externalId))
+      .collect();
+
+    for (const doc of userDocs) {
+      await ctx.db.delete(doc._id);
+    }
+
+    // Delete the user record
+    await ctx.db.delete(user._id);
+
+    return { success: true };
   },
 });
 

@@ -11,9 +11,16 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthedRouteRouteImport } from './routes/_authed/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ApiCrawlDocsRouteImport } from './routes/api/crawl-docs'
 import { Route as AuthedDashboardRouteRouteImport } from './routes/_authed/dashboard/route'
 import { Route as AuthedDashboardIndexRouteImport } from './routes/_authed/dashboard/index'
+import { Route as ApiWebhookFirecrawlRouteImport } from './routes/api/webhook/firecrawl'
 import { Route as AuthedDashboardOnboardingRouteImport } from './routes/_authed/dashboard/onboarding'
+import { Route as AuthedDashboardSettingsRouteRouteImport } from './routes/_authed/dashboard/settings/route'
+import { Route as AuthedChatDocIdRouteRouteImport } from './routes/_authed/chat/$docId/route'
+import { Route as AuthedDashboardSettingsIndexRouteImport } from './routes/_authed/dashboard/settings/index'
+import { Route as AuthedDashboardSettingsBillingRouteImport } from './routes/_authed/dashboard/settings/billing'
+import { Route as AuthedChatDocIdIdRouteImport } from './routes/_authed/chat/$docId/$id'
 
 const AuthedRouteRoute = AuthedRouteRouteImport.update({
   id: '/_authed',
@@ -22,6 +29,11 @@ const AuthedRouteRoute = AuthedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCrawlDocsRoute = ApiCrawlDocsRouteImport.update({
+  id: '/api/crawl-docs',
+  path: '/api/crawl-docs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedDashboardRouteRoute = AuthedDashboardRouteRouteImport.update({
@@ -34,49 +46,131 @@ const AuthedDashboardIndexRoute = AuthedDashboardIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthedDashboardRouteRoute,
 } as any)
+const ApiWebhookFirecrawlRoute = ApiWebhookFirecrawlRouteImport.update({
+  id: '/api/webhook/firecrawl',
+  path: '/api/webhook/firecrawl',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedDashboardOnboardingRoute =
   AuthedDashboardOnboardingRouteImport.update({
     id: '/onboarding',
     path: '/onboarding',
     getParentRoute: () => AuthedDashboardRouteRoute,
   } as any)
+const AuthedDashboardSettingsRouteRoute =
+  AuthedDashboardSettingsRouteRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthedDashboardRouteRoute,
+  } as any)
+const AuthedChatDocIdRouteRoute = AuthedChatDocIdRouteRouteImport.update({
+  id: '/chat/$docId',
+  path: '/chat/$docId',
+  getParentRoute: () => AuthedRouteRoute,
+} as any)
+const AuthedDashboardSettingsIndexRoute =
+  AuthedDashboardSettingsIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthedDashboardSettingsRouteRoute,
+  } as any)
+const AuthedDashboardSettingsBillingRoute =
+  AuthedDashboardSettingsBillingRouteImport.update({
+    id: '/billing',
+    path: '/billing',
+    getParentRoute: () => AuthedDashboardSettingsRouteRoute,
+  } as any)
+const AuthedChatDocIdIdRoute = AuthedChatDocIdIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => AuthedChatDocIdRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof AuthedDashboardRouteRouteWithChildren
+  '/api/crawl-docs': typeof ApiCrawlDocsRoute
+  '/chat/$docId': typeof AuthedChatDocIdRouteRouteWithChildren
+  '/dashboard/settings': typeof AuthedDashboardSettingsRouteRouteWithChildren
   '/dashboard/onboarding': typeof AuthedDashboardOnboardingRoute
+  '/api/webhook/firecrawl': typeof ApiWebhookFirecrawlRoute
   '/dashboard/': typeof AuthedDashboardIndexRoute
+  '/chat/$docId/$id': typeof AuthedChatDocIdIdRoute
+  '/dashboard/settings/billing': typeof AuthedDashboardSettingsBillingRoute
+  '/dashboard/settings/': typeof AuthedDashboardSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api/crawl-docs': typeof ApiCrawlDocsRoute
+  '/chat/$docId': typeof AuthedChatDocIdRouteRouteWithChildren
   '/dashboard/onboarding': typeof AuthedDashboardOnboardingRoute
+  '/api/webhook/firecrawl': typeof ApiWebhookFirecrawlRoute
   '/dashboard': typeof AuthedDashboardIndexRoute
+  '/chat/$docId/$id': typeof AuthedChatDocIdIdRoute
+  '/dashboard/settings/billing': typeof AuthedDashboardSettingsBillingRoute
+  '/dashboard/settings': typeof AuthedDashboardSettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteRouteWithChildren
   '/_authed/dashboard': typeof AuthedDashboardRouteRouteWithChildren
+  '/api/crawl-docs': typeof ApiCrawlDocsRoute
+  '/_authed/chat/$docId': typeof AuthedChatDocIdRouteRouteWithChildren
+  '/_authed/dashboard/settings': typeof AuthedDashboardSettingsRouteRouteWithChildren
   '/_authed/dashboard/onboarding': typeof AuthedDashboardOnboardingRoute
+  '/api/webhook/firecrawl': typeof ApiWebhookFirecrawlRoute
   '/_authed/dashboard/': typeof AuthedDashboardIndexRoute
+  '/_authed/chat/$docId/$id': typeof AuthedChatDocIdIdRoute
+  '/_authed/dashboard/settings/billing': typeof AuthedDashboardSettingsBillingRoute
+  '/_authed/dashboard/settings/': typeof AuthedDashboardSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/dashboard/onboarding' | '/dashboard/'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/api/crawl-docs'
+    | '/chat/$docId'
+    | '/dashboard/settings'
+    | '/dashboard/onboarding'
+    | '/api/webhook/firecrawl'
+    | '/dashboard/'
+    | '/chat/$docId/$id'
+    | '/dashboard/settings/billing'
+    | '/dashboard/settings/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard/onboarding' | '/dashboard'
+  to:
+    | '/'
+    | '/api/crawl-docs'
+    | '/chat/$docId'
+    | '/dashboard/onboarding'
+    | '/api/webhook/firecrawl'
+    | '/dashboard'
+    | '/chat/$docId/$id'
+    | '/dashboard/settings/billing'
+    | '/dashboard/settings'
   id:
     | '__root__'
     | '/'
     | '/_authed'
     | '/_authed/dashboard'
+    | '/api/crawl-docs'
+    | '/_authed/chat/$docId'
+    | '/_authed/dashboard/settings'
     | '/_authed/dashboard/onboarding'
+    | '/api/webhook/firecrawl'
     | '/_authed/dashboard/'
+    | '/_authed/chat/$docId/$id'
+    | '/_authed/dashboard/settings/billing'
+    | '/_authed/dashboard/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRouteRoute: typeof AuthedRouteRouteWithChildren
+  ApiCrawlDocsRoute: typeof ApiCrawlDocsRoute
+  ApiWebhookFirecrawlRoute: typeof ApiWebhookFirecrawlRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -95,6 +189,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/crawl-docs': {
+      id: '/api/crawl-docs'
+      path: '/api/crawl-docs'
+      fullPath: '/api/crawl-docs'
+      preLoaderRoute: typeof ApiCrawlDocsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed/dashboard': {
       id: '/_authed/dashboard'
       path: '/dashboard'
@@ -109,6 +210,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedDashboardIndexRouteImport
       parentRoute: typeof AuthedDashboardRouteRoute
     }
+    '/api/webhook/firecrawl': {
+      id: '/api/webhook/firecrawl'
+      path: '/api/webhook/firecrawl'
+      fullPath: '/api/webhook/firecrawl'
+      preLoaderRoute: typeof ApiWebhookFirecrawlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed/dashboard/onboarding': {
       id: '/_authed/dashboard/onboarding'
       path: '/onboarding'
@@ -116,15 +224,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedDashboardOnboardingRouteImport
       parentRoute: typeof AuthedDashboardRouteRoute
     }
+    '/_authed/dashboard/settings': {
+      id: '/_authed/dashboard/settings'
+      path: '/settings'
+      fullPath: '/dashboard/settings'
+      preLoaderRoute: typeof AuthedDashboardSettingsRouteRouteImport
+      parentRoute: typeof AuthedDashboardRouteRoute
+    }
+    '/_authed/chat/$docId': {
+      id: '/_authed/chat/$docId'
+      path: '/chat/$docId'
+      fullPath: '/chat/$docId'
+      preLoaderRoute: typeof AuthedChatDocIdRouteRouteImport
+      parentRoute: typeof AuthedRouteRoute
+    }
+    '/_authed/dashboard/settings/': {
+      id: '/_authed/dashboard/settings/'
+      path: '/'
+      fullPath: '/dashboard/settings/'
+      preLoaderRoute: typeof AuthedDashboardSettingsIndexRouteImport
+      parentRoute: typeof AuthedDashboardSettingsRouteRoute
+    }
+    '/_authed/dashboard/settings/billing': {
+      id: '/_authed/dashboard/settings/billing'
+      path: '/billing'
+      fullPath: '/dashboard/settings/billing'
+      preLoaderRoute: typeof AuthedDashboardSettingsBillingRouteImport
+      parentRoute: typeof AuthedDashboardSettingsRouteRoute
+    }
+    '/_authed/chat/$docId/$id': {
+      id: '/_authed/chat/$docId/$id'
+      path: '/$id'
+      fullPath: '/chat/$docId/$id'
+      preLoaderRoute: typeof AuthedChatDocIdIdRouteImport
+      parentRoute: typeof AuthedChatDocIdRouteRoute
+    }
   }
 }
 
+interface AuthedDashboardSettingsRouteRouteChildren {
+  AuthedDashboardSettingsBillingRoute: typeof AuthedDashboardSettingsBillingRoute
+  AuthedDashboardSettingsIndexRoute: typeof AuthedDashboardSettingsIndexRoute
+}
+
+const AuthedDashboardSettingsRouteRouteChildren: AuthedDashboardSettingsRouteRouteChildren =
+  {
+    AuthedDashboardSettingsBillingRoute: AuthedDashboardSettingsBillingRoute,
+    AuthedDashboardSettingsIndexRoute: AuthedDashboardSettingsIndexRoute,
+  }
+
+const AuthedDashboardSettingsRouteRouteWithChildren =
+  AuthedDashboardSettingsRouteRoute._addFileChildren(
+    AuthedDashboardSettingsRouteRouteChildren,
+  )
+
 interface AuthedDashboardRouteRouteChildren {
+  AuthedDashboardSettingsRouteRoute: typeof AuthedDashboardSettingsRouteRouteWithChildren
   AuthedDashboardOnboardingRoute: typeof AuthedDashboardOnboardingRoute
   AuthedDashboardIndexRoute: typeof AuthedDashboardIndexRoute
 }
 
 const AuthedDashboardRouteRouteChildren: AuthedDashboardRouteRouteChildren = {
+  AuthedDashboardSettingsRouteRoute:
+    AuthedDashboardSettingsRouteRouteWithChildren,
   AuthedDashboardOnboardingRoute: AuthedDashboardOnboardingRoute,
   AuthedDashboardIndexRoute: AuthedDashboardIndexRoute,
 }
@@ -132,12 +294,25 @@ const AuthedDashboardRouteRouteChildren: AuthedDashboardRouteRouteChildren = {
 const AuthedDashboardRouteRouteWithChildren =
   AuthedDashboardRouteRoute._addFileChildren(AuthedDashboardRouteRouteChildren)
 
+interface AuthedChatDocIdRouteRouteChildren {
+  AuthedChatDocIdIdRoute: typeof AuthedChatDocIdIdRoute
+}
+
+const AuthedChatDocIdRouteRouteChildren: AuthedChatDocIdRouteRouteChildren = {
+  AuthedChatDocIdIdRoute: AuthedChatDocIdIdRoute,
+}
+
+const AuthedChatDocIdRouteRouteWithChildren =
+  AuthedChatDocIdRouteRoute._addFileChildren(AuthedChatDocIdRouteRouteChildren)
+
 interface AuthedRouteRouteChildren {
   AuthedDashboardRouteRoute: typeof AuthedDashboardRouteRouteWithChildren
+  AuthedChatDocIdRouteRoute: typeof AuthedChatDocIdRouteRouteWithChildren
 }
 
 const AuthedRouteRouteChildren: AuthedRouteRouteChildren = {
   AuthedDashboardRouteRoute: AuthedDashboardRouteRouteWithChildren,
+  AuthedChatDocIdRouteRoute: AuthedChatDocIdRouteRouteWithChildren,
 }
 
 const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(
@@ -147,16 +322,19 @@ const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRouteRoute: AuthedRouteRouteWithChildren,
+  ApiCrawlDocsRoute: ApiCrawlDocsRoute,
+  ApiWebhookFirecrawlRoute: ApiWebhookFirecrawlRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

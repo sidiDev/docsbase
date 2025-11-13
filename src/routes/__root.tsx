@@ -11,6 +11,8 @@ import { TanStackDevtools } from "@tanstack/react-devtools";
 import appCss from "../styles.css?url";
 import { ThemeProvider } from "../components/ThemeProvider";
 import type { QueryClient } from "@tanstack/react-query";
+import { Toaster } from "sonner";
+import { ClerkProvider } from "@clerk/clerk-react";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -38,12 +40,8 @@ export const Route = createRootRouteWithContext<{
   shellComponent: RootComponent,
 });
 
-function RootComponent() {
-  return (
-    <RootDocument>
-      <Outlet />
-    </RootDocument>
-  );
+function RootComponent({ children }: { children: React.ReactNode }) {
+  return <RootDocument>{children}</RootDocument>;
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -70,6 +68,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <ThemeProvider>
+          <Toaster position="bottom-center" richColors closeButton />
           {children}
           <TanStackDevtools
             config={{
