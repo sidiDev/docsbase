@@ -25,7 +25,7 @@ export const chat = async (c: Context<{ Bindings: CloudflareBindings }>) => {
 
   if (messages.length === 1) {
     const { text } = await generateText({
-      model: anthropic("claude-3-5-haiku-latest"),
+      model: anthropic("claude-haiku-4-5"),
       system:
         "generate a title based on the following conversation. Please keep it short and concise. PLEASE DO NOT INCLUDE ANY OTHER INFORMATION, CONTEXT, OR EXPLANATION. DO NOT ENCLOSE THE RESPONSE IN QUOTES OR MARKDOWN FORMATTING. DO NOT INCLUDE THE PROMPT OR PREFACE THE RESPONSE.",
       messages: convertToModelMessages(messages),

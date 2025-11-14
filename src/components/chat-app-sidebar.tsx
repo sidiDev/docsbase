@@ -24,6 +24,7 @@ import Brand from "./Brand";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
 import { useUser } from "@clerk/clerk-react";
+import { Id } from "convex/_generated/dataModel";
 
 // This is sample data.
 const data = [
@@ -120,12 +121,21 @@ const data = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user } = useUser();
-  const { docId } = useParams({ from: "/_authed/chat/$docId" });
+  const params = useParams({ strict: false });
+  const docId = params.docId as string;
+  const id = params.id as string | undefined;
   const navigate = useNavigate();
 
   const docs = useQuery(
     api.docs.getDocsByExternalId,
     user?.id ? { externalId: user.id, noPages: true } : "skip"
+  );
+
+  const chats = useQuery(
+    api.chat.getChats,
+    user?.id && docId
+      ? { externalId: user.id, docId: docId as Id<"docs"> }
+      : "skip"
   );
 
   const selectedDoc = docs?.find((doc) => doc._id === docId) || null;
@@ -189,10 +199,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
-            {data.map((item, index) => (
+            {chats?.map((item, index) => (
               <SidebarMenuItem key={index}>
-                <SidebarMenuButton asChild isActive={false}>
-                  <Link to={item.url}>
+                <SidebarMenuButton asChild isActive={item._id === id}>
+                  <Link to="/chat/$docId/$id" params={{ docId, id: item._id }}>
                     <span>{item.title}</span>
                   </Link>
                 </SidebarMenuButton>

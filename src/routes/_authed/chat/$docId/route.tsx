@@ -14,9 +14,8 @@ import {
 } from "@/components/ui/sidebar";
 import ChatContent from "@/components/chat-content";
 import { useEffect, useState, useRef } from "react";
-import { useConvex } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
-import { useMutation } from "convex/react";
 import { useUser } from "@clerk/clerk-react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
@@ -27,6 +26,7 @@ import { chatMessagesAtom } from "@/lib/atoms";
 import { createServerFn } from "@tanstack/react-start";
 import { auth, clerkClient } from "@clerk/tanstack-react-start/server";
 import { ConvexHttpClient } from "convex/browser";
+import Messages from "@/components/Messages";
 
 const authStateFn = createServerFn({ method: "GET" }).handler(async () => {
   const { isAuthenticated, userId } = await auth();
@@ -49,7 +49,7 @@ export const Route = createFileRoute("/_authed/chat/$docId")({
     // Get messages for this chat if we have all required params
     if (params.docId && context.userId && (params as any).id) {
       try {
-        const convexUrl = process.env.VITE_CONVEX_URL;
+        const convexUrl = import.meta.env.VITE_CONVEX_URL;
         if (!convexUrl) {
           console.error("VITE_CONVEX_URL is not set");
           return { messages: [] };
@@ -62,10 +62,21 @@ export const Route = createFileRoute("/_authed/chat/$docId")({
           externalId: context.userId,
         });
 
-        console.log("params.docId", params.docId);
+        if (messages === null || messages.length === 0) {
+          throw redirect({
+            to: "/chat/$docId",
+            params: {
+              docId: params.docId,
+            },
+          });
+        }
 
         return { messages };
       } catch (error) {
+        // Re-throw redirect errors so they propagate correctly
+        if (error instanceof Response || (error as any)?.redirect) {
+          throw error;
+        }
         console.error("Error fetching messages:", error);
         return { messages: [] };
       }
@@ -84,13 +95,24 @@ function RouteComponent() {
 
   const [prompt, setPrompt] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [, setChatMessages] = useAtom(chatMessagesAtom);
+  const [chatMessages, setChatMessages] = useAtom(chatMessagesAtom);
 
-  const convex = useConvex();
   const createChat = useMutation(api.chat.createChat);
   const createMessage = useMutation(api.chat.createMessage);
   const navigate = useNavigate();
   const { user } = useUser();
+
+  // Fetch messages client-side when id changes
+  const fetchedMessages = useQuery(
+    api.chat.getMessages,
+    id && docId && user?.id
+      ? {
+          chatId: id,
+          docId: docId as Id<"docs">,
+          externalId: user.id,
+        }
+      : "skip"
+  );
 
   // Use a ref to store the latest user value so it's available in closures
   const userRef = useRef(user);
@@ -100,12 +122,11 @@ function RouteComponent() {
 
   const CLOUDFLARE_API_URL = (import.meta as any).env.VITE_CLOUDFLARE_API_URL!;
 
-  const { messages, sendMessage, setMessages } = useChat({
+  const { messages, sendMessage, setMessages, status, stop } = useChat({
     transport: new DefaultChatTransport({
       api: `${CLOUDFLARE_API_URL}/chat`,
     }),
     messages: loaderData.messages as UIMessage[],
-    id: id,
     onData: async (data) => {
       const { title } = data.data as { title: string };
       if (title && userRef.current?.id) {
@@ -120,7 +141,6 @@ function RouteComponent() {
         });
 
         chatIdRef.current = chatId as string;
-        navigate({ to: `/chat/${docId}/${chatId}` });
       }
     },
     onFinish: async ({ message, messages }) => {
@@ -152,29 +172,38 @@ function RouteComponent() {
       });
       await createMessage({ message: chatMessage });
       setIsLoading(false);
+      if (messages.length == 2) {
+        setTimeout(() => {
+          navigate({ to: `/chat/${docId}/${chatIdRef.current}` });
+        }, 1000);
+      }
     },
   });
 
   const handleSubmit = () => {
     if (!prompt.trim()) return;
 
+    setChatMessages([
+      ...chatMessages,
+      {
+        id: crypto.randomUUID(),
+        role: "user",
+        parts: [{ type: "text", text: prompt }],
+      },
+    ]);
     sendMessage({ text: prompt });
     setPrompt("");
     setIsLoading(true);
   };
 
   useEffect(() => {
-    console.log("hello world");
-  }, []);
-
-  useEffect(() => {
     userRef.current = user;
     chatIdRef.current = id;
     docIdRef.current = docId;
 
-    // Use loader data if available, otherwise fetch client-side
-    if (loaderData?.messages && loaderData.messages.length > 0) {
-      const initialMessages = loaderData.messages.map(
+    // Use fetched messages when available
+    if (id && fetchedMessages && fetchedMessages.length > 0) {
+      const initialMessages = fetchedMessages.map(
         (item: any) =>
           ({
             id: item.id,
@@ -182,15 +211,20 @@ function RouteComponent() {
             parts: item.parts,
           } as UIMessage)
       );
-      console.log("initialMessages", initialMessages);
       setChatMessages(initialMessages);
       setMessages(initialMessages);
-    }
-
-    if (!id) {
+    } else if (!id) {
+      // Clear messages when no chat is selected
       setChatMessages([]);
+      setMessages([]);
     }
-  }, [user, id, docId, convex, loaderData]);
+  }, [user, id, docId, fetchedMessages, setMessages]);
+
+  useEffect(() => {
+    if (status === "streaming") {
+      setChatMessages(messages);
+    }
+  }, [status, messages]);
 
   return (
     <SidebarProvider>
@@ -202,11 +236,12 @@ function RouteComponent() {
           </div>
         </header>
         <ChatContent
-          messagesContent={<Outlet />}
+          messagesContent={id ? <Outlet /> : <Messages />}
           isLoading={isLoading}
           prompt={prompt}
           setPrompt={setPrompt}
           handleSubmit={handleSubmit}
+          stop={stop}
         />
       </SidebarInset>
     </SidebarProvider>

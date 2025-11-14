@@ -27,6 +27,7 @@ app.use("*", async (c, next) => {
   }
   await next();
 });
+
 app.options("*", (c) => {
   return c.json(null, 200, corsHeaders);
 });

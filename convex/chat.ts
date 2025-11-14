@@ -59,16 +59,20 @@ export const getChats = query({
 
 export const getMessages = query({
   args: {
-    chatId: v.id("chat"),
+    chatId: v.string(),
     docId: v.id("docs"),
     externalId: v.string(),
   },
   handler: async (ctx, args) => {
+    const id = ctx.db.normalizeId("chat", args.chatId);
+    if (!id) {
+      return null;
+    }
     const messages = await ctx.db
       .query("messages")
       .withIndex("byChatIdDocIdExternalId", (q) =>
         q
-          .eq("chatId", args.chatId)
+          .eq("chatId", id)
           .eq("docId", args.docId)
           .eq("externalId", args.externalId)
       )

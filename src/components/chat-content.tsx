@@ -20,12 +20,14 @@ export default function ChatContent({
   setPrompt,
   handleSubmit,
   prompt,
+  stop,
 }: {
   messagesContent: React.ReactNode;
   isLoading: boolean;
   setPrompt: (prompt: string) => void;
   handleSubmit: () => void;
   prompt: string;
+  stop: () => void;
 }) {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -180,19 +182,24 @@ export default function ChatContent({
                       <Mic size={18} />
                     </Button>
                   </PromptInputAction>
-
-                  <Button
-                    size="icon"
-                    disabled={!prompt.trim() || isLoading}
-                    onClick={handleSubmit}
-                    className="size-9 rounded-full"
-                  >
-                    {!isLoading ? (
-                      <ArrowUp size={18} />
-                    ) : (
+                  {isLoading ? (
+                    <Button
+                      size="icon"
+                      onClick={stop}
+                      className="size-9 rounded-full"
+                    >
                       <span className="size-3 rounded-xs bg-white" />
-                    )}
-                  </Button>
+                    </Button>
+                  ) : (
+                    <Button
+                      size="icon"
+                      disabled={!prompt.trim()}
+                      onClick={handleSubmit}
+                      className="size-9 rounded-full"
+                    >
+                      <ArrowUp size={18} />
+                    </Button>
+                  )}
                 </div>
               </PromptInputActions>
             </div>
