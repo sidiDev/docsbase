@@ -21,6 +21,9 @@ export default function ChatContent({
   handleSubmit,
   prompt,
   stop,
+  isSearchEnabled,
+  setSearchEnabled,
+  setStreamingInit,
 }: {
   messagesContent: React.ReactNode;
   isLoading: boolean;
@@ -28,6 +31,9 @@ export default function ChatContent({
   handleSubmit: () => void;
   prompt: string;
   stop: () => void;
+  isSearchEnabled: boolean;
+  setSearchEnabled: (isSearchEnabled: boolean) => void;
+  setStreamingInit: (isStreamingInit: boolean) => void;
 }) {
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -156,8 +162,10 @@ export default function ChatContent({
                 <div className="flex items-center gap-2">
                   <PromptInputAction tooltip="Search">
                     <Button
+                      onClick={() => setSearchEnabled(!isSearchEnabled)}
                       variant="outline"
-                      className="rounded-full text-muted-foreground"
+                      data-state={isSearchEnabled ? "active" : "inactive"}
+                      className="rounded-full text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-primary"
                     >
                       <Globe size={18} />
                       Search
@@ -185,7 +193,10 @@ export default function ChatContent({
                   {isLoading ? (
                     <Button
                       size="icon"
-                      onClick={stop}
+                      onClick={() => {
+                        stop();
+                        setStreamingInit(false);
+                      }}
                       className="size-9 rounded-full"
                     >
                       <span className="size-3 rounded-xs bg-white" />

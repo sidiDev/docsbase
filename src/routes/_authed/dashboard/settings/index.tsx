@@ -185,7 +185,7 @@ function RouteComponent() {
         body: selectedFile,
       });
 
-      const { storageId } = await result.json();
+      const { storageId } = (await result.json()) as { storageId: string };
 
       // Step 3: Update user profile with new picture
       await updateProfilePicture({

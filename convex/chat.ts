@@ -80,3 +80,56 @@ export const getMessages = query({
     return messages;
   },
 });
+
+export const deleteChat = mutation({
+  args: {
+    chatId: v.id("chat"),
+    externalId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Verify the chat belongs to the user
+    const chat = await ctx.db.get(args.chatId);
+    if (!chat || chat.externalId !== args.externalId) {
+      throw new Error("Chat not found or unauthorized");
+    }
+
+    // Delete all messages associated with the chat
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("byChatIdDocIdExternalId", (q) =>
+        q
+          .eq("chatId", args.chatId)
+          .eq("docId", chat.docId)
+          .eq("externalId", args.externalId)
+      )
+      .collect();
+
+    for (const message of messages) {
+      await ctx.db.delete(message._id);
+    }
+
+    // Delete the chat
+    await ctx.db.delete(args.chatId);
+  },
+});
+
+export const updateChatTitle = mutation({
+  args: {
+    chatId: v.id("chat"),
+    externalId: v.string(),
+    title: v.string(),
+  },
+  handler: async (ctx, args) => {
+    // Verify the chat belongs to the user
+    const chat = await ctx.db.get(args.chatId);
+    if (!chat || chat.externalId !== args.externalId) {
+      throw new Error("Chat not found or unauthorized");
+    }
+
+    // Update the chat title
+    await ctx.db.patch(args.chatId, {
+      title: args.title,
+      updatedAt: Date.now(),
+    });
+  },
+});

@@ -25,7 +25,7 @@ export const Route = createFileRoute("/api/crawl-docs")({
 
           const FIRECRAWL_WEBHOOK_URL =
             process.env.NODE_ENV == "development"
-              ? "https://9aa5c2e3b69f.ngrok-free.app/api/webhook/firecrawl"
+              ? "https://e3b629c3f0c2.ngrok-free.app/api/webhook/firecrawl"
               : process.env.FIRECRAWL_WEBHOOK_URL;
 
           // Start the crawl

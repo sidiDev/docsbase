@@ -35,6 +35,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useState } from "react";
 import AddDocs from "@/components/AddDocs";
 import Brand from "@/components/Brand";
+import { useCustomer, CheckoutDialog } from "autumn-js/react";
 
 export const Route = createFileRoute("/_authed/dashboard/")({
   component: RouteComponent,
@@ -42,6 +43,10 @@ export const Route = createFileRoute("/_authed/dashboard/")({
 
 function RouteComponent() {
   const { user } = useUser();
+
+  const { customer, check, isLoading, checkout } = useCustomer({
+    expand: ["invoices", "payment_method"],
+  });
 
   const [isCrawlingExpanded, setIsCrawlingExpanded] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
@@ -52,7 +57,7 @@ function RouteComponent() {
     user?.id ? { externalId: user.id, noPages: false } : "skip"
   );
 
-  if (!docs) {
+  if (!docs || isLoading) {
     return (
       <div className="p-8">
         <div className="text-muted-foreground">
@@ -67,6 +72,10 @@ function RouteComponent() {
     return null;
   }
 
+  const {
+    data: { allowed },
+  } = check({ productId: "docsbase" });
+
   return (
     <div className="">
       <div className="py-6 flex items-start justify-between">
@@ -76,6 +85,19 @@ function RouteComponent() {
             Add a new document to get started.
           </p>
         </div>
+        <Button
+          disabled={isLoading}
+          size="sm"
+          onClick={() => {
+            if (!allowed || !customer) {
+              checkout({ productId: "docsbase", successUrl: location.href });
+            } else {
+              setIsOpen(true);
+            }
+          }}
+        >
+          New docs
+        </Button>
         <Dialog
           open={isOpen}
           onOpenChange={(open) => {
@@ -84,9 +106,6 @@ function RouteComponent() {
             }
           }}
         >
-          <DialogTrigger asChild>
-            <Button size="sm">New docs</Button>
-          </DialogTrigger>
           <DialogContent className="rounded-b-none sm:max-w-full w-full h-full">
             {!startCrawling && (
               <div className="text-center">
@@ -124,9 +143,9 @@ function RouteComponent() {
                 createdAt: number;
                 pages?: { url: string }[];
               }) => (
-                <Dialog>
+                <Dialog key={doc._id}>
                   <DialogTrigger asChild>
-                    <TableRow key={doc._id} className="cursor-pointer">
+                    <TableRow className="cursor-pointer">
                       <TableCell className="font-medium py-4">
                         {doc.name}
                       </TableCell>

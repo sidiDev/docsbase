@@ -25,7 +25,7 @@ function RouteComponent() {
     <div className="py-6">
       <h1 className="text-xl font-bold mb-6">Settings</h1>
       <Separator />
-      <div className="flex gap-24 mt-6">
+      <div className="flex mt-6 gap-6 xl:gap-24">
         <div className="flex flex-col gap-2 text-sm max-w-[150px] flex-1">
           {settingsMenu.map((item) => (
             <SidebarMenuButton

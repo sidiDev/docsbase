@@ -9,6 +9,7 @@
  */
 
 import type * as auth from "../auth.js";
+import type * as autumn from "../autumn.js";
 import type * as chat from "../chat.js";
 import type * as docs from "../docs.js";
 import type * as http from "../http.js";
@@ -22,6 +23,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
+  autumn: typeof autumn;
   chat: typeof chat;
   docs: typeof docs;
   http: typeof http;
@@ -54,4 +56,6 @@ export declare const internal: FilterApi<
   FunctionReference<any, "internal">
 >;
 
-export declare const components: {};
+export declare const components: {
+  autumn: {};
+};

@@ -12,7 +12,9 @@ import appCss from "../styles.css?url";
 import { ThemeProvider } from "../components/ThemeProvider";
 import type { QueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
-import { ClerkProvider } from "@clerk/clerk-react";
+import { AutumnProvider } from "autumn-js/react";
+import { api } from "../../convex/_generated/api";
+import { useConvex } from "convex/react";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -41,7 +43,12 @@ export const Route = createRootRouteWithContext<{
 });
 
 function RootComponent({ children }: { children: React.ReactNode }) {
-  return <RootDocument>{children}</RootDocument>;
+  const convex = useConvex();
+  return (
+    <AutumnProvider convex={convex} convexApi={(api as any).autumn}>
+      <RootDocument>{children}</RootDocument>
+    </AutumnProvider>
+  );
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
@@ -70,7 +77,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <ThemeProvider>
           <Toaster position="bottom-center" richColors closeButton />
           {children}
-          <TanStackDevtools
+          {/* <TanStackDevtools
             config={{
               position: "bottom-right",
             }}
@@ -80,7 +87,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 render: <TanStackRouterDevtoolsPanel />,
               },
             ]}
-          />
+          /> */}
         </ThemeProvider>
         <Scripts />
       </body>
