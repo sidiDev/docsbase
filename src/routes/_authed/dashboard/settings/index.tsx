@@ -32,6 +32,7 @@ import {
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 
 export const Route = createFileRoute("/_authed/dashboard/settings/")({
   component: RouteComponent,
@@ -263,6 +264,14 @@ function RouteComponent() {
 
   // Get the current profile picture (prioritize Convex, fallback to Clerk)
   const currentProfilePicture = convexUser?.pictureUrl || clerkUser?.imageUrl;
+
+  if (!convexUser) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <Spinner className="mx-auto size-5" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 space-y-6 max-w-3xl">
