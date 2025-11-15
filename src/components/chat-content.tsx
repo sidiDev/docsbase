@@ -135,7 +135,7 @@ export default function ChatContent({
     <main className="flex h-screen flex-col overflow-hidden">
       <div ref={chatContainerRef} className="relative flex-1 overflow-y-auto">
         <ChatContainerRoot className="h-full">
-          <ChatContainerContent className="space-y-0 px-5 py-12">
+          <ChatContainerContent className="space-y-0 py-12 lg:px-5">
             {messagesContent}
           </ChatContainerContent>
           <div className="absolute bottom-4 left-1/2 flex w-full max-w-3xl -translate-x-1/2 justify-end px-5">

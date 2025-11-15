@@ -22,7 +22,7 @@ function RouteComponent() {
   const location = useLocation();
 
   return (
-    <div className="py-6">
+    <div className="py-4">
       <h1 className="text-xl font-bold mb-6">Settings</h1>
       <Separator />
       <div className="flex mt-6 gap-6 xl:gap-24">

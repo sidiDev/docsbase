@@ -31,10 +31,10 @@ export const Route = createFileRoute("/api/crawl-docs")({
           // Start the crawl
           const { id } = await firecrawl.startCrawl(url, {
             limit: 100,
-            crawlEntireDomain: true,
             scrapeOptions: {
               formats: ["markdown"],
             },
+            sitemap: "skip",
             webhook: {
               url: FIRECRAWL_WEBHOOK_URL as string,
               events: ["completed", "started", "page", "failed"],

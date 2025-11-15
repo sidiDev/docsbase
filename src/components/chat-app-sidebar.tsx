@@ -247,6 +247,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton size="lg" asChild>
               <Brand
                 href={`/chat/${selectedDoc?._id}`}
+                noLink={!selectedDoc}
                 className="justify-start"
               />
             </SidebarMenuButton>
@@ -276,7 +277,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             navigate({ to: `/chat/${value}` });
           }}
         >
-          <SelectTrigger className="w-full border-none shadow-none px-2">
+          <SelectTrigger className="w-full border-none shadow-none px-2 dark:bg-transparent dark:hover:bg-transparent">
             <SelectValue placeholder="Loading..." />
           </SelectTrigger>
           <SelectContent>

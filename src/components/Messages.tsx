@@ -39,7 +39,7 @@ export default function Messages() {
     }
   };
 
-  console.log(messages);
+  //   console.log(messages);
 
   return (
     <>
@@ -51,7 +51,7 @@ export default function Messages() {
           <Message
             key={index}
             className={cn(
-              "mx-auto flex w-full max-w-3xl flex-col gap-2 px-6",
+              "mx-auto flex w-full max-w-3xl flex-col gap-2 px-6 pt-8 md:pt-0",
               isAssistant ? "items-start" : "items-end"
             )}
           >

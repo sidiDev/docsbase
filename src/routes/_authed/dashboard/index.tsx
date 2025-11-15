@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useUser } from "@clerk/clerk-react";
-import type { Doc } from "../../../../convex/_generated/dataModel";
 import {
   Table,
   TableBody,
@@ -14,29 +13,24 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import moment from "moment";
 import { motion } from "motion/react";
-import {
-  Network,
-  Layers,
-  ChevronDown,
-  Globe,
-  Tag,
-  Calendar,
-} from "lucide-react";
+import { Network, Globe, Tag, Calendar, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { useState } from "react";
 import AddDocs from "@/components/AddDocs";
 import Brand from "@/components/Brand";
-import { useCustomer, CheckoutDialog } from "autumn-js/react";
+import { useCustomer } from "autumn-js/react";
 import { Authenticated, AuthLoading } from "convex/react";
+import { Id } from "../../../../convex/_generated/dataModel";
 
 export const Route = createFileRoute("/_authed/dashboard/")({
   component: RouteComponent,
@@ -69,11 +63,17 @@ function Content() {
   const [isCrawlingExpanded, setIsCrawlingExpanded] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
   const [startCrawling, setStartCrawling] = useState(false);
+  const [editingDocId, setEditingDocId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+  const [deletingDocId, setDeletingDocId] = useState<string | null>(null);
 
   const docs = useQuery(
     api.docs.getDocsByExternalId,
     user?.id ? { externalId: user.id, noPages: false } : "skip"
   );
+
+  const deleteDoc = useMutation(api.docs.deleteDoc);
+  const updateDocName = useMutation(api.docs.updateDocName);
 
   if (!docs || isLoading) {
     return (
@@ -96,7 +96,7 @@ function Content() {
 
   return (
     <div className="">
-      <div className="py-6 flex items-start justify-between">
+      <div className="py-4 flex items-start justify-between">
         <div>
           <h1 className="text-xl font-semibold">Documentations</h1>
           <p className="text-muted-foreground">
@@ -107,8 +107,12 @@ function Content() {
           disabled={isLoading}
           size="sm"
           onClick={() => {
-            if (!allowed || !customer) {
-              checkout({ productId: "docsbase", successUrl: location.href });
+            if ((!allowed || !customer) && docs.length > 0) {
+              checkout({
+                productId: "docsbase",
+                successUrl: location.href,
+                forceCheckout: true,
+              });
             } else {
               setIsOpen(true);
             }
@@ -186,7 +190,55 @@ function Content() {
                           <Tag className="size-3.5 text-muted-foreground" />{" "}
                           NAME:
                         </div>
-                        <p>{doc.name}</p>
+                        {editingDocId === doc._id ? (
+                          <div className="flex items-center gap-2 flex-1">
+                            <Input
+                              value={editingName}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              className="flex-1"
+                              autoFocus
+                            />
+                            <Button
+                              size="sm"
+                              onClick={async () => {
+                                if (editingName.trim()) {
+                                  await updateDocName({
+                                    docId: doc._id as Id<"docs">,
+                                    name: editingName,
+                                  });
+                                  setEditingDocId(null);
+                                  setEditingName("");
+                                }
+                              }}
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingDocId(null);
+                                setEditingName("");
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2 flex-1">
+                            <p>{doc.name}</p>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => {
+                                setEditingDocId(doc._id);
+                                setEditingName(doc.name);
+                              }}
+                            >
+                              <Pencil className="size-4" />
+                            </Button>
+                          </div>
+                        )}
                       </div>
                       <div className="flex items-center gap-6 text-muted-foreground">
                         <div className="flex flex-1 items-center gap-2 max-w-[200px]">
@@ -218,7 +270,12 @@ function Content() {
                           documentation
                         </div>
                         <Card className="border border-border bg-muted/20 p-4 shadow-none">
-                          <button className="mb-3 flex w-full items-center gap-2 text-left transition-colors outline-none hover:opacity-80">
+                          <button
+                            className="mb-3 flex w-full items-center gap-2 text-left transition-colors outline-none hover:opacity-80"
+                            onClick={() =>
+                              setIsCrawlingExpanded(!isCrawlingExpanded)
+                            }
+                          >
                             <span className="text-sm font-medium text-foreground">
                               Pages
                             </span>
@@ -252,6 +309,40 @@ function Content() {
                         </Card>
                       </div>
                     </div>
+                    <DialogFooter>
+                      <Button
+                        variant="destructive"
+                        onClick={async () => {
+                          if (
+                            confirm(
+                              "Are you sure you want to delete this documentation? This will also delete all associated chats and messages."
+                            )
+                          ) {
+                            setDeletingDocId(doc._id);
+                            try {
+                              await deleteDoc({ docId: doc._id as Id<"docs"> });
+                            } catch (error) {
+                              console.error("Error deleting doc:", error);
+                            } finally {
+                              setDeletingDocId(null);
+                            }
+                          }
+                        }}
+                        disabled={deletingDocId === doc._id}
+                      >
+                        {deletingDocId === doc._id ? (
+                          <>
+                            <Spinner className="size-4 mr-2" />
+                            Deleting...
+                          </>
+                        ) : (
+                          <>
+                            <Trash2 className="size-4 mr-2" />
+                            Delete Documentation
+                          </>
+                        )}
+                      </Button>
+                    </DialogFooter>
                   </DialogContent>
                 </Dialog>
               )

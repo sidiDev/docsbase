@@ -1,4 +1,12 @@
 import { ArrowUp } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "./ui/button";
 import { useEffect, useState } from "react";
 import DocProgress from "./DocProgress";
@@ -9,6 +17,8 @@ import { api } from "../../convex/_generated/api";
 import { useMutation, useConvex } from "convex/react";
 import { useUser } from "@clerk/clerk-react";
 import { useNavigate } from "@tanstack/react-router";
+import { Input } from "./ui/input";
+
 export default function AddDocs({
   setStartCrawling,
   setIsOpen,
@@ -18,6 +28,7 @@ export default function AddDocs({
 }) {
   const { user } = useUser();
   const convex = useConvex();
+  const mutateDoc = useMutation(api.docs.createDoc);
 
   const navigate = useNavigate();
 
@@ -26,7 +37,9 @@ export default function AddDocs({
   const [step, setStep] = useState<number>(0);
   const [docId, setDocId] = useState<string>("");
   const [isCrawlDone, setIsCrawlDone] = useState(false);
-  const mutateDoc = useMutation(api.docs.createDoc);
+  const [docsName, setDocsName] = useState("");
+  const [showNameDialog, setShowNameDialog] = useState(false);
+
   const [documents, setDocuments] = useState<
     Array<{
       url: string;
@@ -44,6 +57,7 @@ export default function AddDocs({
       toast.error("Please enter a valid URL");
       return;
     }
+    setShowNameDialog(false);
     setStep(1);
     setStartCrawling(true);
     setIsLoading(true);
@@ -103,7 +117,7 @@ export default function AddDocs({
                         crawlJobId: event.data.id,
                         completed: false,
                         url: event.data.url,
-                        name: event.data.name,
+                        name: docsName || event.data.name,
                         createdAt: Date.now(),
                         updatedAt: Date.now(),
                         externalId: user.id,
@@ -187,31 +201,79 @@ export default function AddDocs({
   }, [docId, convex]);
 
   return (
-    <div className="h-full w-full max-w-2xl mx-auto flex flex-col">
-      <div className="flex-1 pt-6 pb-20">
-        <DocProgress step={step} isLoading={isLoading} documents={documents} />
-      </div>
-      <div className="w-full max-w-2xl mx-auto fixed bottom-4 left-0 right-0 px-4 md:px-0">
-        <form
-          onSubmit={handleSubmit}
-          className="flex items-center border rounded-md bg-white dark:bg-accent dark:border-ring/50 has-[input:focus]:border-ring dark:has-[input:focus]:border-ring duration-150"
-        >
-          <input
-            type="text"
-            placeholder="https://example.com/docs"
-            className="w-full pl-2 py-2.5 outline-none border-none focus:ring-0 bg-transparent"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
+    <>
+      <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Name Your Documentation</DialogTitle>
+            <DialogDescription>
+              Give your documentation a name to help you identify it later.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              type="text"
+              placeholder="e.g., React Documentation"
+              value={docsName}
+              onChange={(e) => setDocsName(e.target.value)}
+              autoFocus
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowNameDialog(false);
+                  setDocsName("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!docsName.trim()}>
+                Start Crawling
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+      <div className="h-full w-full max-w-2xl mx-auto flex flex-col">
+        <div className="flex-1 pt-6 pb-20">
+          <DocProgress
+            step={step}
+            isLoading={isLoading}
+            documents={documents}
           />
-          <Button
-            disabled={isLoading || !url.trim()}
-            size="icon"
-            className="mr-1 dark:bg-white"
+        </div>
+        <div className="w-full max-w-2xl mx-auto fixed bottom-4 left-0 right-0 px-4 md:px-0">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (isLoading) return;
+              if (!isValidUrl(url)) {
+                toast.error("Please enter a valid URL");
+                return;
+              }
+              setShowNameDialog(true);
+            }}
+            className="flex items-center border rounded-md bg-white dark:bg-accent dark:border-ring/50 has-[input:focus]:border-ring dark:has-[input:focus]:border-ring duration-150"
           >
-            <ArrowUp size={18} />
-          </Button>
-        </form>
+            <input
+              type="text"
+              placeholder="https://example.com/docs"
+              className="w-full pl-2 py-2.5 outline-none border-none focus:ring-0 bg-transparent"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+            />
+            <Button
+              disabled={isLoading || !url.trim()}
+              size="icon"
+              className="mr-1 dark:bg-white"
+            >
+              <ArrowUp size={18} />
+            </Button>
+          </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

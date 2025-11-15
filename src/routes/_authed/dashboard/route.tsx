@@ -59,35 +59,7 @@ function RouteComponent() {
       <AppSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator
-            orientation="vertical"
-            className="mr-2 data-[orientation=vertical]:h-4"
-          />
-          <Breadcrumb>
-            <BreadcrumbList>
-              {breadcrumbs.map((breadcrumb, index) => (
-                <div key={breadcrumb.path} className="contents">
-                  <BreadcrumbItem
-                    className={index === 0 ? "hidden md:block" : ""}
-                  >
-                    {index === breadcrumbs.length - 1 ? (
-                      <BreadcrumbPage>{breadcrumb.label}</BreadcrumbPage>
-                    ) : (
-                      <BreadcrumbLink asChild>
-                        <Link to={breadcrumb.path}>{breadcrumb.label}</Link>
-                      </BreadcrumbLink>
-                    )}
-                  </BreadcrumbItem>
-                  {index < breadcrumbs.length - 1 && (
-                    <BreadcrumbSeparator
-                      className={index === 0 ? "hidden md:block" : ""}
-                    />
-                  )}
-                </div>
-              ))}
-            </BreadcrumbList>
-          </Breadcrumb>
+          <SidebarTrigger className="-ml-1 md:hidden" />
         </header>
         <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
           <Outlet />

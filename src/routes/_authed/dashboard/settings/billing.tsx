@@ -22,12 +22,26 @@ import { useCustomer, CheckoutDialog } from "autumn-js/react";
 import { useState } from "react";
 import { Spinner } from "@/components/ui/spinner";
 import moment from "moment";
+import { Authenticated, AuthLoading } from "convex/react";
 
 export const Route = createFileRoute("/_authed/dashboard/settings/billing")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
+  return (
+    <>
+      <AuthLoading>
+        <Spinner className="mx-auto size-5" />
+      </AuthLoading>
+      <Authenticated>
+        <Content />
+      </Authenticated>
+    </>
+  );
+}
+
+function Content() {
   const {
     customer,
     openBillingPortal,
@@ -57,9 +71,8 @@ function RouteComponent() {
                 <div>
                   <h2 className="font-medium">Free</h2>
                   <span className="my-3 block text-2xl font-semibold">
-                    $0 / mo
+                    $0 /mo
                   </span>
-                  <p className="text-muted-foreground text-sm">Per editor</p>
                 </div>
                 <hr className="border-dashed" />
 
@@ -84,9 +97,8 @@ function RouteComponent() {
                   <div>
                     <h2 className="font-medium">Pro</h2>
                     <span className="my-3 block text-2xl font-semibold">
-                      $19 / mo
+                      $25 /mo
                     </span>
-                    <p className="text-muted-foreground text-sm">Per editor</p>
                   </div>
 
                   <Button

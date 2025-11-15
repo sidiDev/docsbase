@@ -144,3 +144,50 @@ export const hasDocs = query({
     return docs !== null;
   },
 });
+
+export const deleteDoc = mutation({
+  args: {
+    docId: v.id("docs"),
+  },
+  handler: async (ctx, args) => {
+    // First, delete all messages associated with this doc
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("byDocId", (q) => q.eq("docId", args.docId))
+      .collect();
+
+    for (const message of messages) {
+      await ctx.db.delete(message._id);
+    }
+
+    // Then, delete all chats associated with this doc
+    const chats = await ctx.db
+      .query("chat")
+      .filter((q) => q.eq(q.field("docId"), args.docId))
+      .collect();
+
+    for (const chat of chats) {
+      await ctx.db.delete(chat._id);
+    }
+
+    // Finally, delete the doc itself
+    await ctx.db.delete(args.docId);
+
+    return { success: true };
+  },
+});
+
+export const updateDocName = mutation({
+  args: {
+    docId: v.id("docs"),
+    name: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.docId, {
+      name: args.name,
+      updatedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});

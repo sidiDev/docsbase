@@ -27,6 +27,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { auth, clerkClient } from "@clerk/tanstack-react-start/server";
 import { ConvexHttpClient } from "convex/browser";
 import Messages from "@/components/Messages";
+import ThemeSwitcher from "@/components/ThemeSwitcher";
 
 const authStateFn = createServerFn({ method: "GET" }).handler(async () => {
   const { isAuthenticated, userId } = await auth();
@@ -341,11 +342,15 @@ function RouteComponent() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b hidden">
-          <div className="flex items-center gap-2 px-3">
+        <header className="fixed z-20 top-0 left-0 right-0 flex h-16 shrink-0 items-center gap-2 border-b md:hidden">
+          <div className="flex items-center justify-between gap-2 px-4 w-full">
             <SidebarTrigger />
+            <ThemeSwitcher />
           </div>
         </header>
+        <div className="hidden absolute top-4 right-4 z-20 md:block">
+          <ThemeSwitcher />
+        </div>
         <ChatContent
           messagesContent={id ? <Outlet /> : <Messages />}
           isLoading={isLoading}
