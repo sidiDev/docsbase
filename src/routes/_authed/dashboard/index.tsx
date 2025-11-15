@@ -36,12 +36,30 @@ import { useState } from "react";
 import AddDocs from "@/components/AddDocs";
 import Brand from "@/components/Brand";
 import { useCustomer, CheckoutDialog } from "autumn-js/react";
+import { Authenticated, AuthLoading } from "convex/react";
 
 export const Route = createFileRoute("/_authed/dashboard/")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
+  return (
+    <>
+      <AuthLoading>
+        <div className="p-8">
+          <div className="text-muted-foreground">
+            <Spinner className="size-5 mx-auto" />
+          </div>
+        </div>
+      </AuthLoading>
+      <Authenticated>
+        <Content />
+      </Authenticated>
+    </>
+  );
+}
+
+function Content() {
   const { user } = useUser();
 
   const { customer, check, isLoading, checkout } = useCustomer({

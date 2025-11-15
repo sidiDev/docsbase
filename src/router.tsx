@@ -8,6 +8,7 @@ import { ConvexQueryClient } from "@convex-dev/react-query";
 import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { routeTree } from "./routeTree.gen";
 import { ClerkProvider, useAuth } from "@clerk/clerk-react";
+import { AutumnWrapper } from "./lib/autumn";
 
 export function getRouter() {
   if (typeof document !== "undefined") {
@@ -50,7 +51,7 @@ export function getRouter() {
           client={convexQueryClient.convexClient}
           useAuth={useAuth}
         >
-          {children}
+          <AutumnWrapper>{children}</AutumnWrapper>
         </ConvexProviderWithClerk>
       </ClerkProvider>
     ),

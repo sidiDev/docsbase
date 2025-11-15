@@ -12,9 +12,6 @@ import appCss from "../styles.css?url";
 import { ThemeProvider } from "../components/ThemeProvider";
 import type { QueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
-import { AutumnProvider } from "autumn-js/react";
-import { api } from "../../convex/_generated/api";
-import { useConvex } from "convex/react";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -43,12 +40,7 @@ export const Route = createRootRouteWithContext<{
 });
 
 function RootComponent({ children }: { children: React.ReactNode }) {
-  const convex = useConvex();
-  return (
-    <AutumnProvider convex={convex} convexApi={(api as any).autumn}>
-      <RootDocument>{children}</RootDocument>
-    </AutumnProvider>
-  );
+  return <RootDocument>{children}</RootDocument>;
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
