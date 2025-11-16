@@ -290,7 +290,7 @@ function Content() {
                                   initial={{ translateY: 10, opacity: 0 }}
                                   animate={{ translateY: 0, opacity: 1 }}
                                   transition={{
-                                    duration: 0.5,
+                                    duration: 0.2,
                                     delay: index * 0.1,
                                   }}
                                   key={index}

@@ -149,7 +149,7 @@ export default function DocProgress({
                         <motion.div
                           initial={{ translateY: 10 }}
                           animate={{ translateY: 0 }}
-                          transition={{ duration: 0.5 }}
+                          transition={{ duration: 0.2 }}
                           key={index}
                           className="flex items-center gap-3 rounded-md border border-border bg-background px-3 py-2.5 transition-colors hover:bg-accent"
                         >
