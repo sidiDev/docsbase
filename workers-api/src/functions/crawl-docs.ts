@@ -30,7 +30,7 @@ export const crawlDocs = async (
       scrapeOptions: {
         formats: ["markdown"],
       },
-      maxDiscoveryDepth: 2,
+      maxDiscoveryDepth: 1,
       sitemap: "skip",
       webhook: {
         url: FIRECRAWL_WEBHOOK_URL as string,
