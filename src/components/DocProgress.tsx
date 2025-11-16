@@ -144,7 +144,7 @@ export default function DocProgress({
                     </span>
                   </button>
                   {isCrawlingExpanded && (
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-h-[200px] max-w-full overflow-y-auto">
                       {documents.map(({ url }, index) => (
                         <motion.div
                           initial={{ translateY: 10 }}

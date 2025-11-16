@@ -128,7 +128,7 @@ function Content() {
             }
           }}
         >
-          <DialogContent className="rounded-b-none sm:max-w-full w-full h-full">
+          <DialogContent className="rounded-b-none sm:max-w-full w-full h-full overflow-y-auto">
             {!startCrawling && (
               <div className="text-center">
                 <Brand noLink={true} />
@@ -284,7 +284,7 @@ function Content() {
                             </span>
                           </button>
                           {isCrawlingExpanded && (
-                            <div className="space-y-2">
+                            <div className="space-y-2 max-h-[200px] max-w-full overflow-y-auto">
                               {doc.pages?.map(({ url }, index) => (
                                 <motion.div
                                   initial={{ translateY: 10, opacity: 0 }}

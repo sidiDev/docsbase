@@ -57,59 +57,191 @@ export const Route = createFileRoute("/api/webhook/firecrawl")({
         console.log("WEBHOOK EVENT", event.type);
 
         if (event.type === "crawl.completed") {
-          const firecrawl = new Firecrawl({
-            apiKey: process.env.FIRECRAWL_API_KEY,
-          });
-          const { data } = await firecrawl.getCrawlStatus(event.id);
+          try {
+            console.log(`Processing crawl ${event.id}...`);
 
-          const docsData = data.map((item) => ({
-            url: item.metadata?.sourceURL || "",
-            title: item.metadata?.title || "",
-            content: item.markdown || "",
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-          }));
-          const convex = new ConvexHttpClient(
-            process.env.VITE_CONVEX_URL as string
-          );
-          const docId = await convex.mutation(api.docs.updateDocPages, {
-            crawlJobId: event.id,
-            completed: true,
-            pages: docsData.map((doc) => ({
-              url: doc.url,
-              title: doc.title,
-              content: "",
-              createdAt: doc.createdAt,
-              updatedAt: doc.updatedAt,
-            })),
-          });
+            const firecrawl = new Firecrawl({
+              apiKey: process.env.FIRECRAWL_API_KEY,
+            });
+            const { data } = await firecrawl.getCrawlStatus(event.id);
+            console.log(`Got ${data.length} pages from Firecrawl`);
 
-          const embeddingResponse = await openai.embeddings.create({
-            model: "text-embedding-3-small",
-            input: docsData.map((doc) => doc.content), // Array of all content
-          });
+            const docsData = data.map((item) => ({
+              url: item.metadata?.sourceURL || "",
+              title: item.metadata?.title || "",
+              content: item.markdown || "",
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            }));
 
-          const vectors = docsData.map((doc, index) => ({
-            id: `${docId}-page-${index}`, // or use doc IDs from Convex
-            vector: embeddingResponse.data[index].embedding,
-            metadata: {
-              url: doc.url,
-              title: doc.title,
+            const convex = new ConvexHttpClient(
+              process.env.VITE_CONVEX_URL as string
+            );
+            const docId = await convex.mutation(api.docs.updateDocPages, {
               crawlJobId: event.id,
-              createdAt: doc.createdAt,
-            },
-          }));
+              completed: true,
+              pages: docsData.map((doc) => ({
+                url: doc.url,
+                title: doc.title,
+                content: "",
+                createdAt: doc.createdAt,
+                updatedAt: doc.updatedAt,
+              })),
+            });
 
-          // 4. Batch upsert to Upstash (ONE API CALL!)
-          await vectorIndex.upsert(vectors);
+            // Chunk documents to avoid token limits
+            const MAX_CHUNK_SIZE = 6000; // ~1500 tokens per chunk (safe margin)
+            const allChunks: { content: string; metadata: any }[] = [];
+
+            docsData.forEach((doc, docIndex) => {
+              const content = doc.content;
+
+              // If content is short enough, use as single chunk
+              if (content.length <= MAX_CHUNK_SIZE) {
+                allChunks.push({
+                  content: content,
+                  metadata: {
+                    docId: docId,
+                    url: doc.url,
+                    title: doc.title,
+                    crawlJobId: event.id,
+                    createdAt: doc.createdAt,
+                    pageIndex: docIndex,
+                    chunkIndex: 0,
+                    totalChunks: 1,
+                  },
+                });
+              } else {
+                // Split into overlapping chunks
+                const overlap = 200; // Small overlap to maintain context
+                let chunkIndex = 0;
+
+                for (
+                  let i = 0;
+                  i < content.length;
+                  i += MAX_CHUNK_SIZE - overlap
+                ) {
+                  const chunk = content.slice(i, i + MAX_CHUNK_SIZE);
+
+                  allChunks.push({
+                    content: chunk,
+                    metadata: {
+                      docId: docId,
+                      url: doc.url,
+                      title: doc.title,
+                      crawlJobId: event.id,
+                      createdAt: doc.createdAt,
+                      pageIndex: docIndex,
+                      chunkIndex: chunkIndex++,
+                      totalChunks: Math.ceil(
+                        content.length / (MAX_CHUNK_SIZE - overlap)
+                      ),
+                    },
+                  });
+                }
+              }
+            });
+
+            console.log(
+              `Processing ${allChunks.length} chunks for embedding...`
+            );
+
+            // Process embeddings in batches to avoid API limits
+            const BATCH_SIZE = 100; // OpenAI recommends max 2048 for text-embedding-3-small
+            const vectors: { id: string; vector: number[]; metadata: any }[] =
+              [];
+
+            for (let i = 0; i < allChunks.length; i += BATCH_SIZE) {
+              const batch = allChunks.slice(i, i + BATCH_SIZE);
+              console.log(
+                `Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(
+                  allChunks.length / BATCH_SIZE
+                )}...`
+              );
+
+              const embeddingResponse = await openai.embeddings.create({
+                model: "text-embedding-3-small",
+                input: batch.map((chunk) => chunk.content),
+              });
+
+              batch.forEach((chunk, batchIndex) => {
+                vectors.push({
+                  id: `${docId}-p${chunk.metadata.pageIndex}-c${chunk.metadata.chunkIndex}`, // Unique ID per chunk
+                  vector: embeddingResponse.data[batchIndex].embedding,
+                  metadata: {
+                    ...chunk.metadata,
+                    content: chunk.content.slice(0, 1500), // Snippet for display
+                  },
+                });
+              });
+            }
+
+            console.log(`Upserting ${vectors.length} vectors to Upstash...`);
+
+            // Upsert in batches to avoid Upstash limits
+            const UPSERT_BATCH_SIZE = 100;
+            for (let i = 0; i < vectors.length; i += UPSERT_BATCH_SIZE) {
+              const batch = vectors.slice(i, i + UPSERT_BATCH_SIZE);
+              await vectorIndex.upsert(batch);
+              console.log(
+                `Upserted batch ${
+                  Math.floor(i / UPSERT_BATCH_SIZE) + 1
+                }/${Math.ceil(vectors.length / UPSERT_BATCH_SIZE)}`
+              );
+            }
+
+            console.log(
+              `✅ Successfully stored ${vectors.length} vectors for doc ${docId}`
+            );
+
+            // Return success response AFTER all operations complete
+            return new Response(
+              JSON.stringify({
+                success: true,
+                message: `Processed ${vectors.length} vectors for doc ${docId}`,
+                docId: docId,
+                vectorCount: vectors.length,
+              }),
+              {
+                status: 200,
+                headers: { "Content-Type": "application/json" },
+              }
+            );
+          } catch (error) {
+            console.error("❌ Webhook processing failed:", error);
+            console.error("Error details:", {
+              message: error instanceof Error ? error.message : String(error),
+              stack: error instanceof Error ? error.stack : undefined,
+            });
+
+            return new Response(
+              JSON.stringify({ success: false, error: String(error) }),
+              { status: 500, headers: { "Content-Type": "application/json" } }
+            );
+          }
+        } else {
+          console.log(
+            `Received webhook event: ${event.type} (no action taken)`
+          );
+
+          // Return response for non-crawl.completed events
+          return new Response(
+            JSON.stringify({
+              success: true,
+              message: `Event ${event.type} acknowledged`,
+            }),
+            {
+              status: 200,
+              headers: { "Content-Type": "application/json" },
+            }
+          );
         }
 
-        console.log("crawl.completed. Document updated");
-
-        return new Response(JSON.stringify({ success: true }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
+        // This should never be reached due to the returns above
+        return new Response(
+          JSON.stringify({ success: false, error: "Unexpected code path" }),
+          { status: 500, headers: { "Content-Type": "application/json" } }
+        );
       },
     },
   },
