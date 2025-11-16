@@ -90,7 +90,11 @@ export const Route = createFileRoute("/api/webhook/firecrawl")({
             });
 
             // Chunk documents to avoid token limits
-            const MAX_CHUNK_SIZE = 6000; // ~1500 tokens per chunk (safe margin)
+            // OpenAI text-embedding-3-small supports up to 8191 tokens per input
+            // Using ~2500 tokens per chunk (~10,000 chars) to stay well under the limit
+            // More conservative estimate accounts for code/markdown which can have higher token density
+            const MAX_CHUNK_SIZE = 10000; // ~2500 tokens per chunk (safe margin under 8192 limit)
+            const OVERLAP_SIZE = 500; // Overlap to maintain context between chunks
             const allChunks: { content: string; metadata: any }[] = [];
 
             docsData.forEach((doc, docIndex) => {
@@ -112,16 +116,15 @@ export const Route = createFileRoute("/api/webhook/firecrawl")({
                   },
                 });
               } else {
-                // Split into overlapping chunks
-                const overlap = 200; // Small overlap to maintain context
+                // Split into overlapping chunks with better context preservation
                 let chunkIndex = 0;
+                const stepSize = MAX_CHUNK_SIZE - OVERLAP_SIZE; // How much to advance each iteration
 
-                for (
-                  let i = 0;
-                  i < content.length;
-                  i += MAX_CHUNK_SIZE - overlap
-                ) {
+                for (let i = 0; i < content.length; i += stepSize) {
                   const chunk = content.slice(i, i + MAX_CHUNK_SIZE);
+
+                  // Calculate total chunks for this document
+                  const totalChunks = Math.ceil(content.length / stepSize);
 
                   allChunks.push({
                     content: chunk,
@@ -133,9 +136,7 @@ export const Route = createFileRoute("/api/webhook/firecrawl")({
                       createdAt: doc.createdAt,
                       pageIndex: docIndex,
                       chunkIndex: chunkIndex++,
-                      totalChunks: Math.ceil(
-                        content.length / (MAX_CHUNK_SIZE - overlap)
-                      ),
+                      totalChunks: totalChunks,
                     },
                   });
                 }
@@ -143,20 +144,60 @@ export const Route = createFileRoute("/api/webhook/firecrawl")({
             });
 
             console.log(
+              `Created ${allChunks.length} chunks from ${
+                docsData.length
+              } pages (avg ${(allChunks.length / docsData.length).toFixed(
+                1
+              )} chunks per page)`
+            );
+
+            // Validate chunk sizes to ensure they're under token limits
+            const MAX_TOKENS_PER_CHUNK = 8000; // Safety margin under 8192 limit
+            const largeChunks = allChunks.filter(
+              (chunk) => chunk.content.length > MAX_CHUNK_SIZE * 1.2
+            );
+            if (largeChunks.length > 0) {
+              console.warn(
+                `⚠️ Warning: Found ${largeChunks.length} chunks exceeding expected size. This may cause token limit errors.`
+              );
+            }
+
+            console.log(
               `Processing ${allChunks.length} chunks for embedding...`
             );
 
             // Process embeddings in batches to avoid API limits
-            const BATCH_SIZE = 100; // OpenAI recommends max 2048 for text-embedding-3-small
+            // OpenAI limit: 300,000 tokens per request
+            // Each chunk is ~2500 tokens, so max ~108 chunks per batch (with safety margin)
+            const MAX_TOKENS_PER_REQUEST = 300000;
+            const ESTIMATED_TOKENS_PER_CHUNK = 2500; // Conservative estimate: ~4 chars per token for markdown/docs
+            const MAX_CHUNKS_PER_BATCH = Math.floor(
+              (MAX_TOKENS_PER_REQUEST * 0.9) / ESTIMATED_TOKENS_PER_CHUNK
+            ); // 90% of limit for safety = ~108 chunks
+            const BATCH_SIZE = Math.max(1, MAX_CHUNKS_PER_BATCH); // At least 1 chunk per batch
+
+            console.log(
+              `Using batch size of ${BATCH_SIZE} chunks (max ${MAX_TOKENS_PER_REQUEST} tokens per request)`
+            );
+
             const vectors: { id: string; vector: number[]; metadata: any }[] =
               [];
 
             for (let i = 0; i < allChunks.length; i += BATCH_SIZE) {
               const batch = allChunks.slice(i, i + BATCH_SIZE);
+
+              // Estimate tokens in this batch for logging
+              const estimatedBatchTokens = batch.reduce(
+                (sum, chunk) => sum + Math.ceil(chunk.content.length / 4),
+                0
+              );
+
               console.log(
                 `Processing batch ${Math.floor(i / BATCH_SIZE) + 1}/${Math.ceil(
                   allChunks.length / BATCH_SIZE
-                )}...`
+                )} (${
+                  batch.length
+                } chunks, ~${estimatedBatchTokens.toLocaleString()} tokens)...`
               );
 
               const embeddingResponse = await openai.embeddings.create({
