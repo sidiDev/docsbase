@@ -105,6 +105,17 @@ export default function AddDocs({
               if (done) {
                 setStep(3);
                 setIsCrawlDone(true);
+                if (location.pathname.includes("onboarding")) {
+                  navigate({ to: "/dashboard" });
+                } else {
+                  toast.success("Documentation added successfully");
+                  if (setIsOpen) {
+                    setIsOpen(false);
+                  }
+                }
+                setIsLoading(false);
+                setStep(3);
+                setStartCrawling(false);
                 break;
               }
 
@@ -179,48 +190,48 @@ export default function AddDocs({
     }
   }
 
-  useEffect(() => {
-    if (!docId) return;
+  // useEffect(() => {
+  //   if (!docId) return;
 
-    let intervalId: NodeJS.Timeout;
+  //   let intervalId: NodeJS.Timeout;
 
-    const fetchDoc = async () => {
-      const doc = await convex.query(api.docs.getDoc, {
-        docId,
-      });
+  //   const fetchDoc = async () => {
+  //     const doc = await convex.query(api.docs.getDoc, {
+  //       docId,
+  //     });
 
-      if (doc?.pages && doc.pages.length > 0) {
-        setDocuments(doc.pages);
+  //     if (doc?.pages && doc.pages.length > 0) {
+  //       setDocuments(doc.pages);
 
-        if (doc.completed) {
-          if (intervalId) {
-            clearInterval(intervalId);
-            console.log("Stopped polling - crawl completed");
-          }
+  //       if (doc.completed) {
+  //         if (intervalId) {
+  //           clearInterval(intervalId);
+  //           console.log("Stopped polling - crawl completed");
+  //         }
 
-          if (location.pathname.includes("onboarding")) {
-            navigate({ to: "/dashboard" });
-          } else {
-            toast.success("Documentation added successfully");
-            if (setIsOpen) {
-              setIsOpen(false);
-            }
-          }
-          setIsLoading(false);
-          setStep(3);
-          setStartCrawling(false);
-        }
-      }
-    };
+  //         if (location.pathname.includes("onboarding")) {
+  //           navigate({ to: "/dashboard" });
+  //         } else {
+  //           toast.success("Documentation added successfully");
+  //           if (setIsOpen) {
+  //             setIsOpen(false);
+  //           }
+  //         }
+  //         setIsLoading(false);
+  //         setStep(3);
+  //         setStartCrawling(false);
+  //       }
+  //     }
+  //   };
 
-    fetchDoc();
+  //   fetchDoc();
 
-    intervalId = setInterval(fetchDoc, 5000);
+  //   intervalId = setInterval(fetchDoc, 5000);
 
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [docId, convex]);
+  //   return () => {
+  //     if (intervalId) clearInterval(intervalId);
+  //   };
+  // }, [docId, convex]);
 
   return (
     <>

@@ -76,8 +76,6 @@ export const chat = async (c: Context<{ Bindings: CloudflareBindings }>) => {
     maxUses: 5,
   });
 
-  console.log("isSearchEnabled", isSearchEnabled);
-
   // Extract relevant context from search results
   const context = searchResults
     .map((result, idx) => {
@@ -101,6 +99,8 @@ ${context}
 
 Please answer the user's question using the context above. If the answer cannot be found in the context, say so.`
     : "You are a helpful assistant.";
+
+  console.log(context);
 
   let title = "";
 

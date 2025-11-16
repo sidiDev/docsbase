@@ -180,19 +180,149 @@ export const Route = createFileRoute("/api/webhook/firecrawl")({
 
             // Upsert in batches to avoid Upstash limits
             const UPSERT_BATCH_SIZE = 100;
+            const upsertResults = [];
+
             for (let i = 0; i < vectors.length; i += UPSERT_BATCH_SIZE) {
               const batch = vectors.slice(i, i + UPSERT_BATCH_SIZE);
-              await vectorIndex.upsert(batch);
               console.log(
-                `Upserted batch ${
+                `Upserting batch ${
                   Math.floor(i / UPSERT_BATCH_SIZE) + 1
-                }/${Math.ceil(vectors.length / UPSERT_BATCH_SIZE)}`
+                }/${Math.ceil(vectors.length / UPSERT_BATCH_SIZE)} (${
+                  batch.length
+                } vectors)...`
               );
+
+              try {
+                const result = await vectorIndex.upsert(batch);
+                upsertResults.push(result);
+                console.log(
+                  `✓ Batch ${
+                    Math.floor(i / UPSERT_BATCH_SIZE) + 1
+                  } upserted successfully`,
+                  result ? `Result: ${JSON.stringify(result)}` : ""
+                );
+              } catch (upsertError) {
+                console.error(
+                  `Failed to upsert batch ${
+                    Math.floor(i / UPSERT_BATCH_SIZE) + 1
+                  }:`,
+                  upsertError
+                );
+                throw upsertError; // Re-throw to trigger the main catch block
+              }
+            }
+
+            // Verify vectors were actually stored with retries
+            // For large datasets, Upstash needs more time to make vectors queryable
+            console.log(`Verifying vector storage...`);
+            let verificationSuccess = false;
+            const maxRetries = 5; // More retries for large datasets
+            const retryDelay = 5000; // 5 seconds between retries (longer for large datasets)
+
+            for (let retry = 0; retry < maxRetries; retry++) {
+              try {
+                // Query for a few vectors to verify they're accessible
+                const sampleIds = vectors.slice(0, 3).map((v) => v.id);
+                if (sampleIds.length > 0) {
+                  const testQuery = await vectorIndex.fetch(sampleIds, {
+                    includeMetadata: true,
+                  });
+
+                  if (testQuery && testQuery.length === sampleIds.length) {
+                    console.log(
+                      `✓ Verification successful: Found all ${testQuery.length} test vectors`
+                    );
+                    verificationSuccess = true;
+                    break;
+                  } else {
+                    console.warn(
+                      `⚠️ Verification attempt ${retry + 1}: Found ${
+                        testQuery?.length || 0
+                      }/${sampleIds.length} vectors`
+                    );
+                    if (retry < maxRetries - 1) {
+                      console.log(
+                        `Waiting ${retryDelay / 1000}s before retry...`
+                      );
+                      await new Promise((resolve) =>
+                        setTimeout(resolve, retryDelay)
+                      );
+                    }
+                  }
+                }
+              } catch (verifyError) {
+                console.warn(
+                  `Verification attempt ${retry + 1} failed:`,
+                  verifyError
+                );
+                if (retry < maxRetries - 1) {
+                  await new Promise((resolve) =>
+                    setTimeout(resolve, retryDelay)
+                  );
+                }
+              }
+            }
+
+            if (!verificationSuccess) {
+              console.error(
+                `⚠️ WARNING: Could not verify vector storage after ${maxRetries} attempts`
+              );
+              // Don't throw error, just warn - the upserts might still be propagating
             }
 
             console.log(
               `✅ Successfully stored ${vectors.length} vectors for doc ${docId}`
             );
+
+            // Dynamic delay based on the number of vectors
+            // Upstash needs significant time to process and replicate larger datasets
+            // Based on testing: 625 vectors takes ~2-3 minutes to appear in dashboard
+            const baseDelay = 2000; // 2 seconds minimum
+            const perVectorDelay = 200; // 200ms per vector (accounts for processing + replication)
+            const maxDelay = 180000; // 3 minutes maximum (for very large datasets)
+            const calculatedDelay = Math.min(
+              baseDelay + vectors.length * perVectorDelay,
+              maxDelay
+            );
+
+            console.log(
+              `Waiting ${(calculatedDelay / 1000).toFixed(1)}s (${(
+                calculatedDelay / 60000
+              ).toFixed(1)}min) for Upstash propagation (${
+                vectors.length
+              } vectors)...`
+            );
+            await new Promise((resolve) =>
+              setTimeout(resolve, calculatedDelay)
+            );
+            console.log(`✓ Propagation delay complete`);
+
+            // Final verification after delay to confirm data is accessible
+            console.log(`Performing final verification after delay...`);
+            try {
+              const sampleIds = vectors.slice(0, 5).map((v) => v.id);
+              if (sampleIds.length > 0) {
+                const finalCheck = await vectorIndex.fetch(sampleIds, {
+                  includeMetadata: true,
+                });
+                if (finalCheck && finalCheck.length === sampleIds.length) {
+                  console.log(
+                    `✓ Final verification successful: All ${finalCheck.length} sample vectors accessible`
+                  );
+                } else {
+                  console.warn(
+                    `⚠️ Final verification: Found ${finalCheck?.length || 0}/${
+                      sampleIds.length
+                    } vectors (may still be propagating)`
+                  );
+                }
+              }
+            } catch (finalVerifyError) {
+              console.warn(
+                `Final verification check failed (data may still be propagating):`,
+                finalVerifyError
+              );
+            }
 
             // Return success response AFTER all operations complete
             return new Response(
