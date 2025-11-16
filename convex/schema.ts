@@ -23,7 +23,7 @@ export default defineSchema({
         v.object({
           url: v.string(),
           title: v.string(),
-          content: v.string(),
+          content: v.optional(v.string()),
           createdAt: v.number(),
           updatedAt: v.number(),
         })

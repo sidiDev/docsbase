@@ -44,7 +44,7 @@ export default function AddDocs({
     Array<{
       url: string;
       title: string;
-      content: string;
+      content?: string;
       createdAt: number;
       updatedAt: number;
     }>
@@ -141,8 +141,6 @@ export default function AddDocs({
                         });
                         setDocId(docId);
                       } else if (event.type === "document") {
-                        console.log(event.data);
-
                         setDocuments((prev) => {
                           const updated = [...prev, event.data];
                           return updated;

@@ -65,7 +65,7 @@ export const Route = createFileRoute("/api/webhook/firecrawl")({
           const docsData = data.map((item) => ({
             url: item.metadata?.sourceURL || "",
             title: item.metadata?.title || "",
-            content: item.markdown || "",
+            content: "",
             createdAt: Date.now(),
             updatedAt: Date.now(),
           }));

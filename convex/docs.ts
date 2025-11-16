@@ -14,7 +14,7 @@ const docSchema = v.object({
       v.object({
         url: v.string(),
         title: v.string(),
-        content: v.string(),
+        content: v.optional(v.string()),
         createdAt: v.number(),
         updatedAt: v.number(),
       })
@@ -40,7 +40,7 @@ export const updateDocPages = mutation({
       v.object({
         url: v.string(),
         title: v.string(),
-        content: v.string(),
+        content: v.optional(v.string()),
         createdAt: v.number(),
         updatedAt: v.number(),
       })
