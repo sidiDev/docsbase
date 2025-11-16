@@ -90,7 +90,7 @@ export const Route = createFileRoute("/api/webhook/firecrawl")({
           });
 
           const vectors = docsData.map((doc, index) => ({
-            id: docId, // or use doc IDs from Convex
+            id: `${docId}-page-${index}`, // or use doc IDs from Convex
             vector: embeddingResponse.data[index].embedding,
             metadata: {
               url: doc.url,
