@@ -1,13 +1,34 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLoaderData } from "@tanstack/react-router";
 import Navbar from "../components/Navbar";
 import Hero from "../components/Hero";
-export const Route = createFileRoute("/")({ component: App });
+import { createServerFn } from "@tanstack/react-start";
+import { auth, clerkClient } from "@clerk/tanstack-react-start/server";
+
+const authStateFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { isAuthenticated, userId } = await auth();
+
+  if (!isAuthenticated) {
+    return { userId: null };
+  }
+
+  const user = await clerkClient().users.getUser(userId);
+  return { userId, firstName: user?.firstName };
+});
+export const Route = createFileRoute("/")({
+  beforeLoad: () => authStateFn(),
+  loader: async ({ params, context }) => {
+    return { userId: context?.userId };
+  },
+  component: App,
+});
 
 function App() {
+  const { userId } = useLoaderData({ from: "/" });
+
   return (
     <main>
-      <Navbar />
-      <Hero />
+      <Navbar userId={userId} />
+      <Hero userId={userId} />
     </main>
   );
 }
