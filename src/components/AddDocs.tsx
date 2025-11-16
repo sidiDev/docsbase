@@ -97,6 +97,8 @@ export default function AddDocs({
         }
 
         const processStream = async () => {
+          let buffer = ""; // Buffer for incomplete messages
+
           try {
             while (true) {
               const { done, value } = await reader.read();
@@ -106,40 +108,59 @@ export default function AddDocs({
                 break;
               }
 
-              const chunk = decoder.decode(value);
-              const lines = chunk.split("\n");
+              // Decode chunk and add to buffer
+              buffer += decoder.decode(value, { stream: true });
 
-              for (const line of lines) {
-                if (line.startsWith("data: ")) {
-                  const event = JSON.parse(line.slice(6));
+              // Split by double newline (SSE message separator)
+              const messages = buffer.split("\n\n");
 
-                  if (event.type === "started" && user?.id) {
-                    // Create doc in Convex
-                    const docId = await mutateDoc({
-                      doc: {
-                        crawlJobId: event.data.id,
-                        completed: false,
-                        url: event.data.url,
-                        name: docsName || event.data.name,
-                        createdAt: Date.now(),
-                        updatedAt: Date.now(),
-                        externalId: user.id,
-                        pages: [],
-                      },
-                    });
-                    setDocId(docId);
-                  } else if (event.type === "document") {
-                    console.log(event.data);
+              // Keep the last incomplete message in buffer
+              buffer = messages.pop() || "";
 
-                    setDocuments((prev) => {
-                      const updated = [...prev, event.data];
-                      return updated;
-                    });
-                  } else if (event.type === "done") {
-                    console.log("Crawl done, fetching doc from Convex...");
-                  } else if (event.type === "error") {
-                    toast.error(`Error: ${event.data.message}`);
-                    setIsLoading(false);
+              for (const message of messages) {
+                const lines = message.split("\n");
+
+                for (const line of lines) {
+                  if (line.startsWith("data: ")) {
+                    try {
+                      const event = JSON.parse(line.slice(6));
+
+                      if (event.type === "started" && user?.id) {
+                        // Create doc in Convex
+                        const docId = await mutateDoc({
+                          doc: {
+                            crawlJobId: event.data.id,
+                            completed: false,
+                            url: event.data.url,
+                            name: docsName || event.data.name,
+                            createdAt: Date.now(),
+                            updatedAt: Date.now(),
+                            externalId: user.id,
+                            pages: [],
+                          },
+                        });
+                        setDocId(docId);
+                      } else if (event.type === "document") {
+                        console.log(event.data);
+
+                        setDocuments((prev) => {
+                          const updated = [...prev, event.data];
+                          return updated;
+                        });
+                      } else if (event.type === "done") {
+                        console.log("Crawl done, fetching doc from Convex...");
+                      } else if (event.type === "error") {
+                        toast.error(`Error: ${event.data.message}`);
+                        setIsLoading(false);
+                      }
+                    } catch (parseError) {
+                      console.error(
+                        "Failed to parse SSE message:",
+                        line,
+                        parseError
+                      );
+                      // Continue processing other messages
+                    }
                   }
                 }
               }
