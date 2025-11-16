@@ -1,44 +1,22 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
+import { createServerFn } from "@tanstack/react-start";
+import { clerkClient, auth } from "@clerk/tanstack-react-start/server";
+
+const authStateFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { isAuthenticated, userId } = await auth();
+
+  if (!isAuthenticated) {
+    throw redirect({
+      to: "/",
+    });
+  }
+
+  const user = await clerkClient().users.getUser(userId);
+  return { userId, firstName: user?.firstName };
+});
 
 export const Route = createFileRoute("/_authed")({
-  beforeLoad: async ({ location }) => {
-    // Access Clerk auth state from window (available after Clerk loads)
-    if (typeof window !== "undefined") {
-      // Get the Clerk instance from the window
-      let clerk = (window as any).Clerk;
-
-      // Wait for Clerk to be loaded
-      if (!clerk?.loaded) {
-        // Wait a bit for Clerk to initialize
-        await new Promise((resolve) => {
-          const checkClerk = () => {
-            const c = (window as any).Clerk;
-            if (c?.loaded) {
-              resolve(true);
-            } else {
-              setTimeout(checkClerk, 50);
-            }
-          };
-          checkClerk();
-        });
-        // Re-fetch clerk after it's loaded
-        clerk = (window as any).Clerk;
-      }
-
-      // Check if user has an active session (more reliable than just checking user object)
-      const isSignedIn =
-        clerk?.session !== null && clerk?.session !== undefined;
-
-      if (!isSignedIn) {
-        throw redirect({
-          to: "/",
-          search: {
-            redirect: location.href,
-          },
-        });
-      }
-    }
-  },
+  beforeLoad: () => authStateFn(),
   component: AuthedLayout,
 });
 
