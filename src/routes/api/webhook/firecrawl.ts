@@ -77,9 +77,12 @@ export const Route = createFileRoute("/api/webhook/firecrawl")({
             const convex = new ConvexHttpClient(
               process.env.VITE_CONVEX_URL as string
             );
+
+            // First update: Add pages but DON'T mark as completed yet
+            // This prevents the app from thinking processing is done prematurely
             const docId = await convex.mutation(api.docs.updateDocPages, {
               crawlJobId: event.id,
-              completed: true,
+              completed: false, // Keep false until vectors are stored
               pages: docsData.map((doc) => ({
                 url: doc.url,
                 title: doc.title,
@@ -88,6 +91,10 @@ export const Route = createFileRoute("/api/webhook/firecrawl")({
                 updatedAt: doc.updatedAt,
               })),
             });
+
+            console.log(
+              `Updated doc ${docId} with ${docsData.length} pages (not marked complete yet)`
+            );
 
             // Chunk documents to avoid token limits
             // OpenAI text-embedding-3-small supports up to 8191 tokens per input
@@ -364,6 +371,21 @@ export const Route = createFileRoute("/api/webhook/firecrawl")({
                 finalVerifyError
               );
             }
+
+            // NOW mark the document as completed - ONLY after all vectors are stored
+            console.log(`Marking doc ${docId} as completed in Convex...`);
+            await convex.mutation(api.docs.updateDocPages, {
+              crawlJobId: event.id,
+              completed: true, // NOW we mark it as complete
+              pages: docsData.map((doc) => ({
+                url: doc.url,
+                title: doc.title,
+                content: "",
+                createdAt: doc.createdAt,
+                updatedAt: doc.updatedAt,
+              })),
+            });
+            console.log(`✅ Doc ${docId} marked as completed in Convex`);
 
             // Return success response AFTER all operations complete
             return new Response(
