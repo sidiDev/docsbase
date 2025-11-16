@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthedRouteRouteImport } from './routes/_authed/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ApiCrawlDocsRouteImport } from './routes/api/crawl-docs'
 import { Route as AuthedDashboardRouteRouteImport } from './routes/_authed/dashboard/route'
 import { Route as AuthedDashboardIndexRouteImport } from './routes/_authed/dashboard/index'
 import { Route as ApiWebhookFirecrawlRouteImport } from './routes/api/webhook/firecrawl'
@@ -29,11 +28,6 @@ const AuthedRouteRoute = AuthedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiCrawlDocsRoute = ApiCrawlDocsRouteImport.update({
-  id: '/api/crawl-docs',
-  path: '/api/crawl-docs',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedDashboardRouteRoute = AuthedDashboardRouteRouteImport.update({
@@ -89,7 +83,6 @@ const AuthedChatDocIdIdRoute = AuthedChatDocIdIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof AuthedDashboardRouteRouteWithChildren
-  '/api/crawl-docs': typeof ApiCrawlDocsRoute
   '/chat/$docId': typeof AuthedChatDocIdRouteRouteWithChildren
   '/dashboard/settings': typeof AuthedDashboardSettingsRouteRouteWithChildren
   '/dashboard/onboarding': typeof AuthedDashboardOnboardingRoute
@@ -101,7 +94,6 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/api/crawl-docs': typeof ApiCrawlDocsRoute
   '/chat/$docId': typeof AuthedChatDocIdRouteRouteWithChildren
   '/dashboard/onboarding': typeof AuthedDashboardOnboardingRoute
   '/api/webhook/firecrawl': typeof ApiWebhookFirecrawlRoute
@@ -115,7 +107,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteRouteWithChildren
   '/_authed/dashboard': typeof AuthedDashboardRouteRouteWithChildren
-  '/api/crawl-docs': typeof ApiCrawlDocsRoute
   '/_authed/chat/$docId': typeof AuthedChatDocIdRouteRouteWithChildren
   '/_authed/dashboard/settings': typeof AuthedDashboardSettingsRouteRouteWithChildren
   '/_authed/dashboard/onboarding': typeof AuthedDashboardOnboardingRoute
@@ -130,7 +121,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dashboard'
-    | '/api/crawl-docs'
     | '/chat/$docId'
     | '/dashboard/settings'
     | '/dashboard/onboarding'
@@ -142,7 +132,6 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
-    | '/api/crawl-docs'
     | '/chat/$docId'
     | '/dashboard/onboarding'
     | '/api/webhook/firecrawl'
@@ -155,7 +144,6 @@ export interface FileRouteTypes {
     | '/'
     | '/_authed'
     | '/_authed/dashboard'
-    | '/api/crawl-docs'
     | '/_authed/chat/$docId'
     | '/_authed/dashboard/settings'
     | '/_authed/dashboard/onboarding'
@@ -169,7 +157,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRouteRoute: typeof AuthedRouteRouteWithChildren
-  ApiCrawlDocsRoute: typeof ApiCrawlDocsRoute
   ApiWebhookFirecrawlRoute: typeof ApiWebhookFirecrawlRoute
 }
 
@@ -187,13 +174,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/crawl-docs': {
-      id: '/api/crawl-docs'
-      path: '/api/crawl-docs'
-      fullPath: '/api/crawl-docs'
-      preLoaderRoute: typeof ApiCrawlDocsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed/dashboard': {
@@ -322,7 +302,6 @@ const AuthedRouteRouteWithChildren = AuthedRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRouteRoute: AuthedRouteRouteWithChildren,
-  ApiCrawlDocsRoute: ApiCrawlDocsRoute,
   ApiWebhookFirecrawlRoute: ApiWebhookFirecrawlRoute,
 }
 export const routeTree = rootRouteImport

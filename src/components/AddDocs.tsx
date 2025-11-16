@@ -75,11 +75,14 @@ export default function AddDocs({
       }, 1000);
 
       try {
-        const response = await fetch("/api/crawl-docs", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url }),
-        });
+        const response = await fetch(
+          `${import.meta.env.VITE_CLOUDFLARE_API_URL}/crawl-docs`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url }),
+          }
+        );
 
         if (!response.ok) {
           throw new Error("Failed to start crawl");

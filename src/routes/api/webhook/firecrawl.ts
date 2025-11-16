@@ -41,7 +41,6 @@ export const Route = createFileRoute("/api/webhook/firecrawl")({
           .update(bodyText)
           .digest("hex");
 
-        // Verify signature using timing-safe comparison
         if (
           !crypto.timingSafeEqual(
             Buffer.from(hash, "hex"),
