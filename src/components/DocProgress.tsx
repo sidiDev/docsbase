@@ -156,7 +156,7 @@ export default function DocProgress({
                           <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/10">
                             <div className="h-2 w-2 rounded-sm bg-primary" />
                           </div>
-                          <span className="flex-1 truncate text-sm text-foreground">
+                          <span className="flex-1 overflow-hidden text-sm text-foreground">
                             {url}
                           </span>
                         </motion.div>

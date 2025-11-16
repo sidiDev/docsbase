@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import { useUser } from "@clerk/clerk-react";
@@ -270,12 +270,7 @@ function Content() {
                           documentation
                         </div>
                         <Card className="border border-border bg-muted/20 p-4 shadow-none">
-                          <button
-                            className="mb-3 flex w-full items-center gap-2 text-left transition-colors outline-none hover:opacity-80"
-                            onClick={() =>
-                              setIsCrawlingExpanded(!isCrawlingExpanded)
-                            }
-                          >
+                          <button className="mb-3 flex w-full items-center gap-2 text-left transition-colors outline-none hover:opacity-80">
                             <span className="text-sm font-medium text-foreground">
                               Pages
                             </span>
@@ -299,9 +294,13 @@ function Content() {
                                   <div className="flex h-5 w-5 items-center justify-center rounded bg-primary/10">
                                     <div className="h-2 w-2 rounded-sm bg-primary" />
                                   </div>
-                                  <span className="flex-1 truncate text-sm text-foreground">
+                                  <Link
+                                    target="_blank"
+                                    to={url}
+                                    className="flex-1 overflow-hidden text-sm text-foreground"
+                                  >
                                     {url}
-                                  </span>
+                                  </Link>
                                 </motion.div>
                               ))}
                             </div>
