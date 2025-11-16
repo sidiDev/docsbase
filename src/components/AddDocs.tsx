@@ -103,19 +103,8 @@ export default function AddDocs({
             while (true) {
               const { done, value } = await reader.read();
               if (done) {
-                setStep(3);
                 setIsCrawlDone(true);
-                if (location.pathname.includes("onboarding")) {
-                  navigate({ to: "/dashboard" });
-                } else {
-                  toast.success("Documentation added successfully");
-                  if (setIsOpen) {
-                    setIsOpen(false);
-                  }
-                }
-                setIsLoading(false);
-                setStep(3);
-                setStartCrawling(false);
+                console.log("Crawl stream closed, polling for completion...");
                 break;
               }
 
@@ -190,48 +179,47 @@ export default function AddDocs({
     }
   }
 
-  // useEffect(() => {
-  //   if (!docId) return;
+  useEffect(() => {
+    // Only start polling after crawl stream is done
+    if (!docId || !isCrawlDone) return;
 
-  //   let intervalId: NodeJS.Timeout;
+    let intervalId: NodeJS.Timeout;
 
-  //   const fetchDoc = async () => {
-  //     const doc = await convex.query(api.docs.getDoc, {
-  //       docId,
-  //     });
+    const fetchDoc = async () => {
+      const doc = await convex.query(api.docs.getDoc, {
+        docId,
+      });
 
-  //     if (doc?.pages && doc.pages.length > 0) {
-  //       setDocuments(doc.pages);
+      console.log(`Polling doc ${docId}: completed=${doc?.completed}`);
 
-  //       if (doc.completed) {
-  //         if (intervalId) {
-  //           clearInterval(intervalId);
-  //           console.log("Stopped polling - crawl completed");
-  //         }
+      if (doc?.completed) {
+        if (intervalId) {
+          clearInterval(intervalId);
+          console.log("✅ Stopped polling - document processing completed");
+        }
 
-  //         if (location.pathname.includes("onboarding")) {
-  //           navigate({ to: "/dashboard" });
-  //         } else {
-  //           toast.success("Documentation added successfully");
-  //           if (setIsOpen) {
-  //             setIsOpen(false);
-  //           }
-  //         }
-  //         setIsLoading(false);
-  //         setStep(3);
-  //         setStartCrawling(false);
-  //       }
-  //     }
-  //   };
+        if (location.pathname.includes("onboarding")) {
+          navigate({ to: "/dashboard" });
+        } else {
+          toast.success("Documentation added successfully");
+          if (setIsOpen) {
+            setIsOpen(false);
+          }
+        }
+        setIsLoading(false);
+        setStep(3);
+        setStartCrawling(false);
+      }
+    };
 
-  //   fetchDoc();
+    fetchDoc();
 
-  //   intervalId = setInterval(fetchDoc, 5000);
+    intervalId = setInterval(fetchDoc, 5000);
 
-  //   return () => {
-  //     if (intervalId) clearInterval(intervalId);
-  //   };
-  // }, [docId, convex]);
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [docId, isCrawlDone, convex, navigate, setIsOpen, setStartCrawling]);
 
   return (
     <>
