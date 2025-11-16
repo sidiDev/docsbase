@@ -8,6 +8,7 @@
 	},
 	"dependencies": {
 		"@ai-sdk/anthropic": "^2.0.44",
+		"@mendable/firecrawl-js": "^4.5.0",
 		"@upstash/vector": "^1.2.2",
 		"ai": "^5.0.93",
 		"hono": "^4.10.5",

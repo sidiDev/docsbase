@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { chat } from "./functions/chat";
+import { crawlDocs } from "./functions/crawl-docs";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
@@ -33,6 +34,7 @@ app.options("*", (c) => {
 });
 
 app.post("/chat", chat);
+app.post("/crawl-docs", crawlDocs);
 
 app.get("/message", (c) => {
   return c.text("Hello Hono!");
