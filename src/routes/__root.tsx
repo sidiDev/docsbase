@@ -76,14 +76,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         <ThemeProvider>
           <Toaster position="bottom-center" richColors closeButton />
-          <button>Click me</button>
-          <button
-            onClick={() => {
-              throw new Error("Test error");
-            }}
-          >
-            Click me
-          </button>
           {children}
           {/* <TanStackDevtools
             config={{
