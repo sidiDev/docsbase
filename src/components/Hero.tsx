@@ -1,5 +1,11 @@
 import LoginButton from "./LoginButton";
 
+/**
+ * Renders a centered hero section advertising the documentation knowledge base.
+ *
+ * @param userId - Identifier of the current user, or `null` if unauthenticated; used to personalize login behaviour.
+ * @returns A JSX element containing the hero heading, supporting text, and a login button.
+ */
 export default function Hero({ userId }: { userId: string | null }) {
   return (
     <div className="max-w-2xl mx-auto text-center py-20 space-y-6">
