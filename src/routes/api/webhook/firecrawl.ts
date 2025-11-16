@@ -95,7 +95,6 @@ export const Route = createFileRoute("/api/webhook/firecrawl")({
             metadata: {
               url: doc.url,
               title: doc.title,
-              content: doc.content.slice(0, 2000), // Snippet for display
               crawlJobId: event.id,
               createdAt: doc.createdAt,
             },
