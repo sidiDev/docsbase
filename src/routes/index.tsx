@@ -22,6 +22,13 @@ export const Route = createFileRoute("/")({
   component: App,
 });
 
+/**
+ * Render the app's main layout with navigation and hero sections.
+ *
+ * Reads the route loader's `userId` and passes it to the Navbar and Hero components.
+ *
+ * @returns The rendered React element: a `<main>` containing `Navbar` and `Hero`, each receiving the loader-provided `userId`.
+ */
 function App() {
   const { userId } = useLoaderData({ from: "/" });
 
