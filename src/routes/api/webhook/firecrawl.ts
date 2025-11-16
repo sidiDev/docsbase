@@ -65,7 +65,7 @@ export const Route = createFileRoute("/api/webhook/firecrawl")({
           const docsData = data.map((item) => ({
             url: item.metadata?.sourceURL || "",
             title: item.metadata?.title || "",
-            content: "",
+            content: item.markdown || "",
             createdAt: Date.now(),
             updatedAt: Date.now(),
           }));
@@ -75,7 +75,13 @@ export const Route = createFileRoute("/api/webhook/firecrawl")({
           const docId = await convex.mutation(api.docs.updateDocPages, {
             crawlJobId: event.id,
             completed: true,
-            pages: docsData,
+            pages: docsData.map((doc) => ({
+              url: doc.url,
+              title: doc.title,
+              content: "",
+              createdAt: doc.createdAt,
+              updatedAt: doc.updatedAt,
+            })),
           });
 
           const embeddingResponse = await openai.embeddings.create({
