@@ -218,7 +218,7 @@ export const Route = createFileRoute("/api/webhook/firecrawl")({
                   vector: embeddingResponse.data[batchIndex].embedding,
                   metadata: {
                     ...chunk.metadata,
-                    content: chunk.content.slice(0, 1500), // Snippet for display
+                    content: chunk.content, // Store FULL content for RAG context
                   },
                 });
               });

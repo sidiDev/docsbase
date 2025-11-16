@@ -60,13 +60,21 @@ export const chat = async (c: Context<{ Bindings: CloudflareBindings }>) => {
 
   const embedding = embeddingData.data[0].embedding;
 
-  // Search Upstash Vector for relevant documents filtered by cr
+  // Search Upstash Vector for relevant documents filtered by crawlJobId
+  // Increased topK to 10 since chunks are now larger and more comprehensive
   const searchResults = await index.query({
     vector: embedding,
-    topK: 5,
+    topK: 10,
     includeMetadata: true,
     filter: `crawlJobId = '${crawlJobId}'`,
   });
+
+  console.log(
+    `Vector search returned ${searchResults.length} results for crawlJobId: ${crawlJobId}`
+  );
+  if (searchResults.length === 0) {
+    console.warn(`⚠️ No vectors found for crawlJobId: ${crawlJobId}`);
+  }
 
   const anthropic = createAnthropic({
     apiKey: env.ANTHROPIC_API_KEY,
@@ -84,11 +92,22 @@ export const chat = async (c: Context<{ Bindings: CloudflareBindings }>) => {
         url?: string;
         title?: string;
       };
+      const contentLength = metadata.content?.length || 0;
+      console.log(
+        `Result ${idx + 1}: ${
+          metadata.title
+        } (${contentLength} chars) - Score: ${result.score}`
+      );
       return `[${idx + 1}] ${metadata.title ? `**${metadata.title}**\n` : ""}${
         metadata.content || ""
       }${metadata.url ? `\n(Source: ${metadata.url})` : ""}`;
     })
     .join("\n\n");
+
+  const totalContextLength = context.length;
+  console.log(
+    `Total context length: ${totalContextLength} chars from ${searchResults.length} chunks`
+  );
 
   const systemPrompt = context
     ? `You are a helpful assistant that answers questions based on the provided documentation context.
@@ -99,8 +118,6 @@ ${context}
 
 Please answer the user's question using the context above. If the answer cannot be found in the context, say so.`
     : "You are a helpful assistant.";
-
-  console.log(context);
 
   let title = "";
 
