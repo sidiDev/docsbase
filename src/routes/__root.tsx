@@ -12,6 +12,7 @@ import appCss from "../styles.css?url";
 import { ThemeProvider } from "../components/ThemeProvider";
 import type { QueryClient } from "@tanstack/react-query";
 import { Toaster } from "sonner";
+import { DefaultCatchBoundary } from "@/components/DefaultCatchBoundary";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -36,6 +37,13 @@ export const Route = createRootRouteWithContext<{
       },
     ],
   }),
+  errorComponent: (props) => {
+    return (
+      <RootDocument>
+        <DefaultCatchBoundary {...props} />
+      </RootDocument>
+    );
+  },
   shellComponent: RootComponent,
 });
 
@@ -68,6 +76,14 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       <body>
         <ThemeProvider>
           <Toaster position="bottom-center" richColors closeButton />
+          <button>Click me</button>
+          <button
+            onClick={() => {
+              throw new Error("Test error");
+            }}
+          >
+            Click me
+          </button>
           {children}
           {/* <TanStackDevtools
             config={{

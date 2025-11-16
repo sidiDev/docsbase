@@ -9,6 +9,7 @@ import { ConvexProviderWithClerk } from "convex/react-clerk";
 import { routeTree } from "./routeTree.gen";
 import { ClerkProvider, useAuth } from "@clerk/clerk-react";
 import { AutumnWrapper } from "./lib/autumn";
+import * as Sentry from "@sentry/tanstackstart-react";
 
 export function getRouter() {
   if (typeof document !== "undefined") {
@@ -56,6 +57,16 @@ export function getRouter() {
       </ClerkProvider>
     ),
   });
+
+  if (!router.isServer) {
+    Sentry.init({
+      dsn: "https://5ceff1e511e1aba1df2f925bb07f1e46@o4508194135146496.ingest.de.sentry.io/4510373993119824",
+
+      // Adds request headers and IP for users, for more info visit:
+      // https://docs.sentry.io/platforms/javascript/guides/tanstackstart-react/configuration/options/#sendDefaultPii
+      sendDefaultPii: true,
+    });
+  }
 
   return router;
 }
