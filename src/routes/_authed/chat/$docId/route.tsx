@@ -130,15 +130,19 @@ function RouteComponent() {
   const requestChatIdRef = useRef<string | undefined>(undefined);
   const requestDocIdRef = useRef<string | undefined>(undefined);
 
+  // Store crawlJobId and isSearchEnabled in refs so they can be updated on navigation
+  const crawlJobIdRef = useRef<string>(loaderData.crawlJobId);
+  const isSearchEnabledRef = useRef<boolean>(isSearchEnabled);
+
   const CLOUDFLARE_API_URL = (import.meta as any).env.VITE_CLOUDFLARE_API_URL!;
 
   const { messages, sendMessage, setMessages, status, stop } = useChat({
     transport: new DefaultChatTransport({
       api: `${CLOUDFLARE_API_URL}/chat`,
-      body: {
-        crawlJobId: loaderData.crawlJobId,
-        isSearchEnabled: isSearchEnabled,
-      },
+      body: () => ({
+        crawlJobId: crawlJobIdRef.current,
+        isSearchEnabled: isSearchEnabledRef.current,
+      }),
     }),
     messages: loaderData.messages as UIMessage[],
     onData: async (data) => {
@@ -251,6 +255,11 @@ function RouteComponent() {
   const isStreamingRef = useRef<boolean>(false);
   const streamingForChatIdRef = useRef<string | undefined>(undefined);
 
+  // Update isSearchEnabled ref whenever the state changes
+  useEffect(() => {
+    isSearchEnabledRef.current = isSearchEnabled;
+  }, [isSearchEnabled]);
+
   // Handle chat/doc changes
   useEffect(() => {
     userRef.current = user;
@@ -259,6 +268,9 @@ function RouteComponent() {
 
     chatIdRef.current = id;
     docIdRef.current = docId;
+
+    // Update crawlJobId ref when loaderData changes
+    crawlJobIdRef.current = loaderData.crawlJobId;
 
     // If chat/doc changed during streaming, abort the stream
     if (
@@ -274,7 +286,7 @@ function RouteComponent() {
       requestChatIdRef.current = undefined;
       requestDocIdRef.current = undefined;
     }
-  }, [user, id, docId, stop]);
+  }, [user, id, docId, stop, loaderData.crawlJobId]);
 
   // Handle loading messages when fetchedMessages updates
   useEffect(() => {
