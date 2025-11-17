@@ -1,4 +1,4 @@
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Check, Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,8 @@ import { useMutation, useConvex } from "convex/react";
 import { useUser } from "@clerk/clerk-react";
 import { useNavigate } from "@tanstack/react-router";
 import { Input } from "./ui/input";
+import { Card, CardHeader, CardTitle, CardDescription } from "./ui/card";
+import starterDocs from "@/lib/starter";
 
 export default function AddDocs({
   setStartCrawling,
@@ -39,6 +41,8 @@ export default function AddDocs({
   const [isCrawlDone, setIsCrawlDone] = useState(false);
   const [docsName, setDocsName] = useState("");
   const [showNameDialog, setShowNameDialog] = useState(false);
+  const [showStarterDialog, setShowStarterDialog] = useState(false);
+  const [isLoadingStarter, setIsLoadingStarter] = useState(false);
 
   const [documents, setDocuments] = useState<
     Array<{
@@ -179,6 +183,60 @@ export default function AddDocs({
     }
   }
 
+  async function handleUseStarter(starter: (typeof starterDocs)[0]) {
+    if (isLoadingStarter || !user?.id) return;
+
+    setIsLoading(true);
+    setIsLoadingStarter(true);
+    setShowStarterDialog(false);
+    setStep(1);
+    setStartCrawling(true);
+
+    try {
+      // Create doc in Convex with pre-filled data
+      const docId = await mutateDoc({
+        doc: {
+          crawlJobId: starter.crawlJobId,
+          completed: true, // Pre-filled docs are already complete
+          url: starter.url,
+          name: starter.name,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          externalId: user.id,
+          pages: starter.pages.map((page) => ({
+            ...page,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          })),
+        },
+      });
+
+      setDocId(docId);
+      setDocuments(starter.pages);
+      setStep(2);
+      setTimeout(() => {
+        if (location.pathname.includes("onboarding")) {
+          navigate({ to: "/dashboard" });
+        } else {
+          toast.success("Pre-filled documentation added successfully");
+          if (setIsOpen) {
+            setIsOpen(false);
+          }
+        }
+
+        setIsLoadingStarter(false);
+        setStartCrawling(false);
+        setIsLoading(false);
+      }, 5000);
+    } catch (error) {
+      console.error("Error adding starter docs:", error);
+      toast.error("Failed to add starter documentation");
+      setIsLoadingStarter(false);
+      setStartCrawling(false);
+      setIsLoading(false);
+    }
+  }
+
   useEffect(() => {
     // Only start polling after crawl stream is done
     if (!docId || !isCrawlDone) return;
@@ -264,6 +322,54 @@ export default function AddDocs({
             isLoading={isLoading}
             documents={documents}
           />
+          <div className="flex flex-col items-center justify-center gap-2 text-center max-w-sm mx-auto">
+            <Dialog
+              open={showStarterDialog}
+              onOpenChange={setShowStarterDialog}
+            >
+              <DialogTrigger asChild>
+                {isLoadingStarter ? (
+                  <div></div>
+                ) : (
+                  <Button className="gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    Use pre-filled docs to start quickly
+                  </Button>
+                )}
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl w-full sm:max-w-2xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Start quickly</DialogTitle>
+                  <DialogDescription>
+                    If you just want to try Docsbase out and don't have the time
+                    to wait, you can use the following pre-filled docs
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  {starterDocs.map((starter, index) => (
+                    <Card
+                      key={index}
+                      className="cursor-pointer hover:border-primary transition-colors p-2"
+                      onClick={() => handleUseStarter(starter)}
+                    >
+                      <CardHeader className="px-2">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <CardTitle className="flex items-center gap-2 text-sm">
+                              {starter.name}
+                            </CardTitle>
+                            <CardDescription className="mt-1 text-xs">
+                              {starter.pages.length} pages • {starter.url}
+                            </CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  ))}
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
         <div className="w-full max-w-2xl mx-auto fixed bottom-4 left-0 right-0 px-4 md:px-0">
           <form

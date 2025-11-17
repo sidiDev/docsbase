@@ -26,7 +26,7 @@ export const crawlDocs = async (
     // Start the crawl
     const { id } = await firecrawl.startCrawl(url, {
       limit: 120,
-      //   crawlEntireDomain: true,
+      crawlEntireDomain: true,
       scrapeOptions: {
         formats: ["markdown"],
       },

@@ -27,7 +27,12 @@ export const Route = createRootRouteWithContext<{
         content: "width=device-width, initial-scale=1",
       },
       {
-        title: "TanStack Start Starter",
+        title: "DocsBase - Your Documentation Knowledge Base",
+      },
+      {
+        name: "description",
+        content:
+          "Chat with your documentation using AI. DocsBase helps you quickly find answers and insights from your technical documentation.",
       },
     ],
     links: [
