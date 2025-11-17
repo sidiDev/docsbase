@@ -104,10 +104,7 @@ export const chat = async (c: Context<{ Bindings: CloudflareBindings }>) => {
     })
     .join("\n\n");
 
-  const totalContextLength = context.length;
-  console.log(
-    `Total context length: ${totalContextLength} chars from ${searchResults.length} chunks`
-  );
+  console.log(context);
 
   const systemPrompt = context
     ? `You are a helpful assistant that answers questions based on the provided documentation context.
@@ -116,7 +113,7 @@ Here is the relevant context from the documentation:
 
 ${context}
 
-Please answer the user's question using the context above. If the answer cannot be found in the context, say so.`
+Please answer the user's question using the context above. If the answer cannot be found in the context or you don't know the answer, say so.`
     : "You are a helpful assistant.";
 
   let title = "";
@@ -124,7 +121,7 @@ Please answer the user's question using the context above. If the answer cannot 
   if (messages.length === 1) {
     const { text } = await generateText({
       model: anthropic("claude-3-5-haiku-latest"),
-      system: `generate a title based on the following conversation. Please keep it short and concise. PLEASE DO NOT INCLUDE ANY OTHER INFORMATION, CONTEXT, OR EXPLANATION. DO NOT ENCLOSE THE RESPONSE IN QUOTES OR MARKDOWN FORMATTING. DO NOT INCLUDE THE PROMPT OR PREFACE THE RESPONSE. Here is the relevant context from the documentation:
+      system: `generate a title based on the following conversation. Please keep it short and concise (no longer than 10 words). PLEASE DO NOT INCLUDE ANY OTHER INFORMATION, CONTEXT, OR EXPLANATION. DO NOT ENCLOSE THE RESPONSE IN QUOTES OR MARKDOWN FORMATTING. DO NOT INCLUDE THE PROMPT OR PREFACE THE RESPONSE. Here is the relevant context from the documentation:
 
 ${context}`,
       messages: convertToModelMessages(messages),
