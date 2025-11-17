@@ -8,7 +8,7 @@ A documentation chat assistant powered by AI.
 - **Backend**: Convex (real-time database), Clerk (authentication)
 - **API**: Cloudflare Workers (Hono framework)
 - **AI**: Anthropic Claude, Upstash Vector, Firecrawl
-- **Pricing**: Autumn
+- **Payment**: Autumn
 - **Monitoring**: Sentry, Coderabbit
 - **Hosting**: Netlify
 

@@ -21,6 +21,9 @@ export const chat = async (c: Context<{ Bindings: CloudflareBindings }>) => {
   }: { messages: UIMessage[]; crawlJobId: string; isSearchEnabled: boolean } =
     body;
 
+  console.log("crawlJobId", crawlJobId);
+  console.log("isSearchEnabled", isSearchEnabled);
+
   const env = c.env as CloudflareBindings;
 
   const index = new Index({
@@ -104,7 +107,7 @@ export const chat = async (c: Context<{ Bindings: CloudflareBindings }>) => {
     })
     .join("\n\n");
 
-  console.log(context);
+  // console.log(context);
 
   const systemPrompt = context
     ? `You are a helpful assistant that answers questions based on the provided documentation context.
