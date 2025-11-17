@@ -147,6 +147,7 @@ ${context}`,
         system: systemPrompt,
         messages: convertToModelMessages(messages),
         ...(isSearchEnabled && {
+          toolChoice: "required",
           tools: {
             web_search: webSearchTool,
           },

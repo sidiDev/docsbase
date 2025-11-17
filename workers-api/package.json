@@ -1,20 +1,20 @@
 {
-	"name": "workers-api",
-	"type": "module",
-	"scripts": {
-		"dev": "wrangler dev",
-		"deploy": "wrangler deploy --minify",
-		"cf-typegen": "wrangler types --env-interface CloudflareBindings"
-	},
-	"dependencies": {
-		"@ai-sdk/anthropic": "^2.0.44",
-		"@mendable/firecrawl-js": "^4.5.0",
-		"@upstash/vector": "^1.2.2",
-		"ai": "^5.0.93",
-		"hono": "^4.10.5",
-		"zod": "^4.1.12"
-	},
-	"devDependencies": {
-		"wrangler": "^4.47.0"
-	}
+  "name": "docsbase",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^2.0.44",
+    "@mendable/firecrawl-js": "^4.5.0",
+    "@upstash/vector": "^1.2.2",
+    "ai": "^5.0.93",
+    "hono": "^4.10.5",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "wrangler": "^4.47.0"
+  }
 }
