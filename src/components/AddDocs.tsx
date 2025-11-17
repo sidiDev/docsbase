@@ -328,7 +328,7 @@ export default function AddDocs({
               onOpenChange={setShowStarterDialog}
             >
               <DialogTrigger asChild>
-                {isLoadingStarter ? (
+                {isLoading ? (
                   <div></div>
                 ) : (
                   <Button className="gap-2">
