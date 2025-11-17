@@ -121,9 +121,7 @@ Please answer the user's question using the context above. If the answer cannot 
   if (messages.length === 1) {
     const { text } = await generateText({
       model: anthropic("claude-sonnet-4-0"),
-      system: `generate a title based on the following conversation. Please keep it short and concise (no longer than 10 words). PLEASE DO NOT INCLUDE ANY OTHER INFORMATION, CONTEXT, OR EXPLANATION. DO NOT ENCLOSE THE RESPONSE IN QUOTES OR MARKDOWN FORMATTING. DO NOT INCLUDE THE PROMPT OR PREFACE THE RESPONSE. Here is the relevant context from the documentation:
-
-${context}`,
+      system: `generate a title based on the following conversation. Please keep it short and concise (no longer than 10 words). PLEASE DO NOT INCLUDE ANY OTHER INFORMATION, CONTEXT, OR EXPLANATION. DO NOT ENCLOSE THE RESPONSE IN QUOTES OR MARKDOWN FORMATTING. DO NOT INCLUDE THE PROMPT OR PREFACE THE RESPONSE.`,
       messages: convertToModelMessages(messages),
     });
     title = text;
