@@ -4,14 +4,11 @@ import { crawlDocs } from "./functions/crawl-docs";
 
 const app = new Hono<{ Bindings: CloudflareBindings }>();
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
-
 app.use("*", async (c, next) => {
-  const originUrl = "*";
+  const originUrl =
+    c.env.ENV == "development"
+      ? "http://localhost:3000"
+      : "https://docsbase.dev";
 
   // Add CORS headers to every response
   c.res.headers.set("Access-Control-Allow-Origin", originUrl);
@@ -30,7 +27,15 @@ app.use("*", async (c, next) => {
 });
 
 app.options("*", (c) => {
-  return c.json(null, 200, corsHeaders);
+  return c.json(null, 200, {
+    "Access-Control-Allow-Origin":
+      c.env.ENV == "development"
+        ? "http://localhost:3000"
+        : "https://docsbase.dev",
+    "Access-Control-Allow-Methods": "POST, OPTIONS, GET",
+    "Access-Control-Allow-Headers": "*",
+    "Access-Control-Max-Age": "86400",
+  });
 });
 
 app.post("/chat", chat);
